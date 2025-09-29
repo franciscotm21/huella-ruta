@@ -73,6 +73,7 @@ export default function HuellaConPortada(){
             <img src="/laguna.jpeg" alt="Parque Nacional Laguna del Laja" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
             <div className="relative z-10 text-center max-w-3xl px-6">
+              <img src="/logo.png" alt="Logo" className="mx-auto mb-20 h-48 w-auto" />
               <motion.h1 initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="text-4xl sm:text-5xl md:text-6xl font-extrabold">
                 Mide tu huella. <span className="text-emerald-300">Actúa</span>. Disfruta la ruta.
               </motion.h1>
@@ -238,9 +239,7 @@ function Calculadora(){
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="p-2 rounded-2xl bg-emerald-100">
-            <MountainSnow className="text-emerald-600" />
-          </motion.div>
+           <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
           <div>
             <h1 className="text-2xl font-semibold">Huella de tu visita – Nevados de Chillán & PN Laguna del Laja</h1>
             <p className="text-sm text-slate-500">Calcula tu impacto y recibe acciones locales para reducir y compensar.</p>
