@@ -95,6 +95,18 @@ export default function HuellaConPortada(){
 function Calculadora(){
   const [paso,setPaso] = useState(0);
   const [st,setSt] = useState(ESTADO_INICIAL);
+  // Banner por cada paso del formulario
+  const bannerMap: Record<number, string> = {
+    0: "/foto-identificacion.jpg",
+    1: "/foto-transporte.png",
+    2: "/foto-alojamiento.jpg",
+    3: "/foto-alimentacion.jpg",
+    4: "/foto-actividades.jpg",
+    5: "/foto-residuos.jpg",
+    6: "/foto-resultados.jpg",
+  };
+  const bannerSrc = bannerMap[paso] ?? "/laguna.jpg";
+
 
   const set = (path:string, value:any) => {
     setSt(s => {
@@ -245,7 +257,7 @@ function Calculadora(){
 
       <div className="max-w-5xl mx-auto px-4">
         <div className="rounded-2xl overflow-hidden mb-6">
-          <img src="/laguna.jpg" alt="Parque Nacional Laguna del Laja" className="w-full h-52 object-cover" />
+          <img src={bannerSrc} alt="Imagen de la sección" className="w-full h-52 object-cover" />
         </div>
 
         <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden mb-6">
@@ -253,6 +265,7 @@ function Calculadora(){
         </div>
 
         {paso===0 && (
+        
           <Card>
             <CardHeader title="Identificación" icon={<Map/>} subtitle="Origen, destino y distancia (ida; calculamos ida y vuelta)." />
             <CardContent>
@@ -502,15 +515,15 @@ function Calculadora(){
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
             <p className="text-slate-400">Corredor Biológico Nevados de Chillán – PN Laguna del Laja</p>
-            <p className="text-slate-400">Ajusta factores según inventarios y guías regionales (Ñuble/Biobío).</p>
+            <p className="text-slate-400">(Ñuble/Biobío).</p>
           </div>
           <div>
-            <p className="font-medium text-slate-600">Parámetros editables</p>
-            <p className="text-slate-500 mt-1">Edita los objetos de factores y distancias en el componente.</p>
+            <p className="font-medium text-slate-600">Universidad de Concepción</p>
+            <p className="text-slate-500 mt-1">Depatamento de Ingeniería Industrial</p>
           </div>
           <div>
-            <p className="font-medium text-slate-600">Imágenes</p>
-            <p className="text-slate-500 mt-1">La portada usa /public/laguna.jpg (puedes reemplazarla por otra foto propia).</p>
+            <p className="font-medium text-slate-600">Calculadora de huella de carbono</p>
+            <p className="text-slate-500 mt-1">Mide y contribuye con tu visita</p>
           </div>
         </div>
       </footer>
