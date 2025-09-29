@@ -105,7 +105,7 @@ function Calculadora(){
     5: "/foto-residuos.jpg",
     6: "/foto-resultados.jpg",
   };
-  const bannerSrc = bannerMap[paso] ?? "/laguna.jpg";
+  const bannerSrc = bannerMap[paso] ?? "/laguna.JPG";
 
 
   const set = (path:string, value:any) => {
