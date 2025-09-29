@@ -76,7 +76,7 @@ export default function HuellaConPortada(){
               <motion.h1 initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="text-4xl sm:text-5xl md:text-6xl font-extrabold">
                 Mide tu huella. <span className="text-emerald-300">Actúa</span>. Disfruta la ruta.
               </motion.h1>
-              <p className="mt-5 text-lg text-white/90">Calcula tu CO₂e y recibe acciones con impacto real en el corredor Nevados de Chillán – PN Laguna del Laja.</p>
+              <p className="mt-5 text-lg text-white/90">Calcula tu huella de carbono para tu visita a la Reserva de Biósfera "Corredor Biológico Nevados de Chillán – Laguna del Laja"  y recibe acciones de compensación para compensar tu huella.</p>
               <motion.button onClick={()=>setStart(true)} whileTap={{ scale: 0.97 }} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-white/95 px-8 py-4 font-semibold text-gray-900 shadow-lg hover:bg-white">
                 🚀 Comenzar ahora
               </motion.button>
