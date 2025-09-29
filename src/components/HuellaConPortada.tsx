@@ -70,7 +70,7 @@ export default function HuellaConPortada(){
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="relative min-h-[100svh] flex items-center justify-center"
           >
-            <img src="/laguna.jpg" alt="Parque Nacional Laguna del Laja" className="absolute inset-0 h-full w-full object-cover" />
+            <img src="/laguna.JPG" alt="Parque Nacional Laguna del Laja" className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
             <div className="relative z-10 text-center max-w-3xl px-6">
               <motion.h1 initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="text-4xl sm:text-5xl md:text-6xl font-extrabold">
