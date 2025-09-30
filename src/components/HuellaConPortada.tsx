@@ -234,7 +234,28 @@ function Calculadora(){
       { icon:<Droplets className="w-4 h-4"/>, titulo:"Ahorro de agua", texto:"Duchas cortas y uso racional."},
     ]
   };
+ const renderLabel = (props: any) => {
+    const { cx, cy, midAngle, outerRadius, percent, name } = props;
+    const RAD = Math.PI / 180;
+    const r = outerRadius + 18;
+    const x = cx + r * Math.cos(-midAngle * RAD);
+    const y = cy + r * Math.sin(-midAngle * RAD);
 
+    if (percent < 0.03) return null;
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#334155"
+        fontSize={12}
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+      >
+        {`${name} ${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
@@ -454,7 +475,7 @@ function Calculadora(){
                 <div className="order-2 md:order-1">
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
                     <div className="text-sm text-emerald-700">Huella estimada de tu visita</div>
-                    <div className="text-4xl font-bold text-emerald-800">{fmt(totalTons)} t CO₂e</div>
+                    <div className="text-4xl font-bold text-emerald-800">{totalKg.toFixed(2)} kg CO₂e</div>
                     <div className="text-xs text-slate-500 mt-1">Equivalente a {fmt(totalKg)} kg CO₂e</div>
                   </div>
                   <div className="mt-4">
@@ -466,7 +487,7 @@ function Calculadora(){
                       {desglose.map((b,i)=>(
                         <li key={b.name} className="flex justify-between py-1 border-b border-slate-100">
                           <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{background:colores[i%colores.length]}} />{b.name}</span>
-                          <span>{fmt(b.kg/1000)} t</span>
+                           <span>{b.kg.toFixed(2)} kg</span>
                         </li>
                       ))}
                     </ul>
@@ -488,16 +509,36 @@ function Calculadora(){
                     </button>
                   </div>
                 </div>
-                <div className="order-1 md:order-2 h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie dataKey="kg" data={desglose} innerRadius={60} outerRadius={90} paddingAngle={3}>
-                        {desglose.map((_,index)=>(<Cell key={`cell-${index}`} fill={colores[index%colores.length]} />))}
-                      </Pie>
-                      <Tooltip formatter={(v:number)=>`${fmt(v/1000)} t CO₂e`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <div className="order-1 md:order-2 h-72 overflow-visible">
+  <ResponsiveContainer width="100%" height="100%">
+    <PieChart>
+      <Pie
+        data={desglose}
+        dataKey="kg"
+        nameKey="name"          // 👈 necesario para que la etiqueta use el nombre
+        innerRadius={60}
+        outerRadius={90}
+        paddingAngle={3}
+        label={renderLabel}     // 👈 activa etiquetas externas
+        labelLine={true}        // 👈 dibuja la línea hacia la etiqueta
+      >
+        {desglose.map((_, index) => (
+          <Cell key={`cell-${index}`} fill={colores[index % colores.length]} />
+        ))}
+      </Pie>
+
+      {/* Tooltip en kg + porcentaje (NO toneladas) */}
+      <Tooltip
+        formatter={(value: number, _name: any, p: any) => {
+          const pct = totalKg > 0 ? ((value / totalKg) * 100).toFixed(1) : "0.0";
+          // value llega en kg porque dataKey="kg"
+          return [`${value.toFixed(2)} kg (${pct}%)`, p.payload.name];
+        }}
+      />
+    </PieChart>
+  </ResponsiveContainer>
+</div>
+
               </div>
             </CardContent>
           </Card>
