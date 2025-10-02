@@ -25,6 +25,145 @@ const CITY_PRESET_KM_ONEWAY: Record<string, number> = {
   "La Serena": 0, "Temuco": 0, "Rancagua": 0,
   "Iquique": 0, "Puerto Montt": 0, "Otra": 0,
 };
+// Destinos disponibles en tu selector
+const DESTINOS = [
+  "Las Trancas",
+  "Nevados de Chillán",
+  "San Fabián",
+  "Pinto",
+  "Yungay",
+  "El Carmen",
+  "Pemuco",
+  "Coihueco",
+  "Laguna del Laja",
+];
+
+// Distancias de IDA (km) por combinación Origen → Destino principal
+// Aproximadas. Ajusta a tu metodología/localidad cuando quieras.
+const DIST_IDA_KM: Record<string, Record<string, number>> = {
+  "Chillán": {
+    "Las Trancas": 70,
+    "Nevados de Chillán": 75,
+    "San Fabián": 86,
+    "Pinto": 38,
+    "Yungay": 65,
+    "El Carmen": 52,
+    "Pemuco": 60,
+    "Coihueco": 33,
+    "Laguna del Laja": 140,
+  },
+  "Concepción": {
+    "Las Trancas": 210,
+    "Nevados de Chillán": 220,
+    "San Fabián": 230,
+    "Pinto": 165,
+    "Yungay": 150,
+    "El Carmen": 135,
+    "Pemuco": 140,
+    "Coihueco": 190,
+    "Laguna del Laja": 190,
+  },
+  "Santiago": {
+    "Las Trancas": 470,
+    "Nevados de Chillán": 480,
+    "San Fabián": 505,
+    "Pinto": 445,
+    "Yungay": 430,
+    "El Carmen": 420,
+    "Pemuco": 425,
+    "Coihueco": 470,
+    "Laguna del Laja": 520,
+  },
+  "Antofagasta": {
+    "Las Trancas": 1640,
+    "Nevados de Chillán": 1650,
+    "San Fabián": 1670,
+    "Pinto": 1630,
+    "Yungay": 1620,
+    "El Carmen": 1610,
+    "Pemuco": 1620,
+    "Coihueco": 1650,
+    "Laguna del Laja": 1700,
+  },
+  "Valparaíso": {
+    "Las Trancas": 520,
+    "Nevados de Chillán": 530,
+    "San Fabián": 555,
+    "Pinto": 500,
+    "Yungay": 485,
+    "El Carmen": 475,
+    "Pemuco": 480,
+    "Coihueco": 525,
+    "Laguna del Laja": 560,
+  },
+  "Viña del Mar": {
+    "Las Trancas": 515,
+    "Nevados de Chillán": 515,
+    "San Fabián": 545,
+    "Pinto": 495,
+    "Yungay": 480,
+    "El Carmen": 470,
+    "Pemuco": 475,
+    "Coihueco": 520,
+    "Laguna del Laja": 555,
+  },
+  "La Serena": {
+    "Las Trancas": 710,
+    "Nevados de Chillán": 720,
+    "San Fabián": 745,
+    "Pinto": 690,
+    "Yungay": 680,
+    "El Carmen": 670,
+    "Pemuco": 675,
+    "Coihueco": 720,
+    "Laguna del Laja": 760,
+  },
+  "Temuco": {
+    "Las Trancas": 370,
+    "Nevados de Chillán": 380,
+    "San Fabián": 405,
+    "Pinto": 350,
+    "Yungay": 335,
+    "El Carmen": 325,
+    "Pemuco": 330,
+    "Coihueco": 375,
+    "Laguna del Laja": 260,
+  },
+  "Rancagua": {
+    "Las Trancas": 420,
+    "Nevados de Chillán": 430,
+    "San Fabián": 455,
+    "Pinto": 400,
+    "Yungay": 390,
+    "El Carmen": 380,
+    "Pemuco": 385,
+    "Coihueco": 430,
+    "Laguna del Laja": 470,
+  },
+  "Iquique": {
+    "Las Trancas": 1990,
+    "Nevados de Chillán": 2000,
+    "San Fabián": 2020,
+    "Pinto": 1980,
+    "Yungay": 1970,
+    "El Carmen": 1960,
+    "Pemuco": 1970,
+    "Coihueco": 2000,
+    "Laguna del Laja": 2050,
+  },
+  "Puerto Montt": {
+    "Las Trancas": 630,
+    "Nevados de Chillán": 640,
+    "San Fabián": 665,
+    "Pinto": 610,
+    "Yungay": 600,
+    "El Carmen": 590,
+    "Pemuco": 595,
+    "Coihueco": 640,
+    "Laguna del Laja": 520,
+  },
+};
+
 
 // Factores (ejemplos)
 const F_TRANSP = { auto_gasolina:0.18, auto_diesel:0.20, auto_hibrido:0.11, kwh_100km:17, grid:0.35, bus:0.06, avion:0.15, van_local:0.10, moto_nieve_h:8.0, snowcat_h:4.0 };
@@ -122,8 +261,8 @@ function Calculadora(){
 
   const progreso = Math.round(((paso+1)/PASOS.length)*100);
 
-  const { desglose, totalKg, totalTons, topCat } = useMemo(()=>{
-    const baseKm = st.id.km_personalizado>0 ? st.id.km_personalizado : (CITY_PRESET_KM_ONEWAY[st.id.origen] ?? 0);
+  const { desglose, totalKg, totalTons, topCat, baseKm } = useMemo(()=>{
+    const baseKm = st.id.km_personalizado>0 ? st.id.km_personalizado : DIST_IDA_KM[st.id.origen]?.[st.id.destino]  ?? (CITY_PRESET_KM_ONEWAY[st.id.origen] ?? 0);
     const kmTotal = baseKm*2;
 
     let llegarKg = 0;
@@ -194,7 +333,7 @@ function Calculadora(){
     ];
     const totalKg = desglose.reduce((s,x)=>s+x.kg,0);
     const top = desglose.reduce((a,b)=>a.kg>b.kg?a:b, desglose[0]);
-    return { desglose, totalKg, totalTons: totalKg/1000, topCat: top.name };
+    return { desglose, totalKg, totalTons: totalKg/1000, topCat: top.name, baseKm };
   },[st]);
 
   const colores = ["#10b981","#0ea5e9","#f59e0b","#ef4444","#6366f1","#14b8a6"];
@@ -262,7 +401,7 @@ function Calculadora(){
         <div className="flex items-center gap-3">
            <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
           <div>
-            <h1 className="text-2xl font-semibold">Huella de tu visita – Nevados de Chillán & PN Laguna del Laja</h1>
+            <h1 className="text-2xl font-semibold">Huella de tu visita – Nevados de Chillán & Laguna del Laja</h1>
             <p className="text-sm text-slate-500">Calcula tu impacto y recibe acciones locales para reducir y compensar.</p>
           </div>
         </div>
@@ -299,13 +438,14 @@ function Calculadora(){
                 <div>
                   <label className="text-sm">Destino principal</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.destino} onChange={e=>set("id.destino", e.target.value)}>
-                    {["Las Trancas","Nevados de Chillán","San Fabián","Pinto","Yungay","El Carmen","Pemuco","Coihueco","PN Laguna del Laja","Otro"].map(x=>(<option key={x} value={x}>{x}</option>))}
+                    {["Las Trancas","Nevados de Chillán","San Fabián","Pinto","Yungay","El Carmen","Pemuco","Coihueco","Laguna del Laja","Otro"].map(x=>(<option key={x} value={x}>{x}</option>))}
                   </select>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-sm">Distancia estimada ida (km) — personaliza si tu ciudad es lejana</label>
                   <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.km_personalizado} onChange={e=>set("id.km_personalizado", Number(e.target.value||0))} />
                   <p className="text-xs text-slate-500 mt-1">Si dejas en cero, usamos el valor referencial según tu ciudad. El cálculo considera ida + vuelta.</p>
+                  <p className="text-xs text-slate-500 mt-1"> Usando {Math.round(baseKm)} km de ida según la combinación {st.id.origen} → {st.id.destino}.</p>
                 </div>
               </div>
             </CardContent>
@@ -554,12 +694,12 @@ function Calculadora(){
       <footer className="mt-12 border-t">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="text-slate-400">Corredor Biológico Nevados de Chillán – PN Laguna del Laja</p>
+            <p className="font-medium text-slate-600">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
             <p className="text-slate-400">(Ñuble/Biobío).</p>
           </div>
           <div>
             <p className="font-medium text-slate-600">Universidad de Concepción</p>
-            <p className="text-slate-500 mt-1">Depatamento de Ingeniería Industrial</p>
+            <p className="text-slate-500 mt-1">Departamento de Ingeniería Industrial</p>
           </div>
           <div>
             <p className="font-medium text-slate-600">Calculadora de huella de carbono</p>
