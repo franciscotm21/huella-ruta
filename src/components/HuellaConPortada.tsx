@@ -326,7 +326,7 @@ function Calculadora(){
     const resAgua = (res+agua)*st.residuosagua.dias;
 
     const desglose = [
-      { name:"Llegar/volver", kg:llegarKg },
+      { name:"Transporte ida/regreso", kg:llegarKg },
       { name:"Transporte local", kg:localKg },
       { name:"Alojamiento", kg:alojamientoKg },
       { name:"Alimentación", kg:alim },
@@ -348,7 +348,7 @@ function Calculadora(){
   };
 
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
-    "Llegar/volver": [
+    "Transporte ida/regreso": [
       { icon:<Car className="w-4 h-4"/>, titulo:"Comparte el auto", texto:"Llena los asientos: baja el CO₂e por persona."},
       { icon:<Plane className="w-4 h-4"/>, titulo:"Combina bus + avión", texto:"Reduce el tramo aéreo cuando sea posible."},
       { icon:<Bike className="w-4 h-4"/>, titulo:"Elige rutas cercanas", texto:"Prefiere destinos del corredor más próximos."},
