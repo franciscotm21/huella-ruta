@@ -4,6 +4,8 @@ import React, { useMemo, useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // ===== UTIL =====
 const fmt = (n: number) => Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 }).format(n);
@@ -395,6 +397,155 @@ function Calculadora(){
       </text>
     );
   };
+
+      // Utilidad: convierte /public/archivo.png en dataURL para jsPDF
+async function fileToDataURL(path: string): Promise<string | null> {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result as string);
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
+const exportarPDF = async () => {
+  // Colores (Tailwind-ish)
+  const emerald = [16, 185, 129] as const;
+  const slate   = [71, 85, 105] as const;
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // Header: banda de color
+  doc.setFillColor(...emerald);
+  doc.rect(0, 0, pageW, 80, "F");
+
+  // Logo (opcional)
+  const logo = await fileToDataURL("/logo.png"); // cambia si tu ruta es otra
+  if (logo) {
+    try {
+      doc.addImage(logo, "PNG", 26, 16, 120, 48); // x,y,w,h
+    } catch {
+      // si falla, seguimos sin logo
+    }
+  }
+
+  // Título
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Reporte de Huella de Carbono", logo ? 160 : 26, 40);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text("Corredor Biológico Nevados de Chillán – Laguna del Laja", logo ? 160 : 26, 58);
+
+  // Caja resumen total
+  doc.setDrawColor(...emerald);
+  doc.setLineWidth(1);
+  doc.setTextColor(...slate);
+  doc.roundedRect(26, 100, pageW - 52, 80, 10, 10);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Huella estimada de tu visita", 40, 125);
+
+  // totalKg viene en kg (ya hiciste el cambio). Muestra grande:
+  doc.setFontSize(28);
+  doc.setTextColor(17, 94, 89); // un verde oscuro
+  doc.text(`${(totalKg).toFixed(2)} kg CO₂e`, 40, 160);
+  doc.setTextColor(...slate);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Equivalente a ${(totalKg).toFixed(1)} kg CO₂e`, 40, 178);
+
+  // Breve contexto del viaje (si tienes baseKm/origen/destino)
+  try {
+    // Si en tu useMemo retornas baseKm, úsalo; si no, muestra km_personalizado:
+    const baseKmMostrar =
+      typeof baseKm !== "undefined"
+        ? Math.round(baseKm)
+        : (st?.id?.km_personalizado ? Math.round(st.id.km_personalizado) : 0);
+
+    doc.setFontSize(10);
+    doc.text(
+      `Origen: ${st?.id?.origen ?? "-"}   ·   Destino: ${st?.id?.destino ?? "-"}   ·   Distancia ida: ${baseKmMostrar} km`,
+      40,
+      196
+    );
+  } catch {
+    // sin bloqueo si no tienes baseKm
+  }
+
+  // Tabla de desglose
+  const startY = 220;
+  const rows = desglose.map((d: any) => {
+    const pct = totalKg > 0 ? ((d.kg / totalKg) * 100).toFixed(1) + "%" : "0%";
+    return [d.name, `${d.kg.toFixed(2)} kg`, pct];
+  });
+
+  autoTable(doc, {
+    head: [["Categoría", "Emisiones", "Participación"]],
+    body: rows,
+    startY,
+    styles: { font: "helvetica", fontSize: 10, textColor: slate as any },
+    headStyles: { fillColor: emerald as any, textColor: [255, 255, 255] },
+    bodyStyles: { fillColor: [248, 250, 252] }, // slate-50
+    alternateRowStyles: { fillColor: [255, 255, 255] },
+    columnStyles: {
+      0: { cellWidth: 220 },
+      1: { halign: "right" },
+      2: { halign: "right" },
+    },
+    margin: { left: 26, right: 26 },
+  });
+
+  // Acciones recomendadas (toma de accionesPorCategoria o acciones)
+  const yAfter = (doc as any).lastAutoTable?.finalY
+    ? (doc as any).lastAutoTable.finalY + 24
+    : startY + 24;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...slate);
+  doc.text(`Acciones recomendadas (mayor contribución: ${topCat})`, 26, yAfter);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const listaAcciones =
+    (typeof acciones !== "undefined" && acciones?.[topCat]) ||
+    (typeof acciones !== "undefined" && acciones?.[topCat]) ||
+    [];
+
+  let y = yAfter + 16;
+  listaAcciones.forEach((a: any) => {
+    // punto
+    doc.setDrawColor(...emerald);
+    doc.setFillColor(...emerald);
+    doc.circle(30, y - 4, 2.5, "F");
+    // título
+    doc.setFont("helvetica", "bold");
+    doc.text(a.titulo, 40, y);
+    y += 14;
+    // texto
+    doc.setFont("helvetica", "normal");
+    const lines = doc.splitTextToSize(a.texto, pageW - 80);
+    doc.text(lines, 40, y);
+    y += lines.length * 12 + 6;
+  });
+
+  // Footer
+  const fecha = new Date().toLocaleString();
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  doc.text(`Generado el ${fecha} · huellarutas.cl`, 26, 820);
+
+  doc.save("reporte-huella.pdf");
+};
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
@@ -647,6 +798,8 @@ function Calculadora(){
                     <button onClick={exportar} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50">
                       <Download className="w-4 h-4" /> Exportar JSON
                     </button>
+                    <button type="button" onClick={exportarPDF} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border">📄 Exportar PDF
+                    </button>
                   </div>
                 </div>
                 <div className="order-1 md:order-2 h-72 overflow-visible">
@@ -694,7 +847,7 @@ function Calculadora(){
       <footer className="mt-12 border-t">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="font-medium text-slate-600">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
+            <p className="text-slate-400">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
             <p className="text-slate-400">(Ñuble/Biobío).</p>
           </div>
           <div>
