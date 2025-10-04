@@ -966,8 +966,8 @@ function CenterText({ viewBox, totalKg }: any) {
       nameKey="name"
       cx="66%"
       cy="46%"
-      innerRadius={78}
-      outerRadius={110}
+      innerRadius={76}
+      outerRadius={108}
       paddingAngle={2}
       cornerRadius={10}
       labelLine={true} 
