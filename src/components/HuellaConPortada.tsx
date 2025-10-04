@@ -952,8 +952,8 @@ function CenterText({ viewBox, totalKg }: any) {
                   </div>
                 </div>
                 <div style={{ transform: 'scale(0.92)', transformOrigin: 'center' }}>
-             <ResponsiveContainer width="100%" height={320}>
-  <PieChart margin={{ top: 10, right: 140, bottom: 10, left: 20 }}>
+             <ResponsiveContainer width="100%" height={300}>
+  <PieChart margin={{ top: 10, right: 136, bottom: 10, left: 20 }}>
     <defs>
       <filter id="softShadow2" x="-20%" y="-20%" width="140%" height="140%">
         <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.12" />
@@ -966,8 +966,8 @@ function CenterText({ viewBox, totalKg }: any) {
       nameKey="name"
       cx="67%"
       cy="46%"
-      innerRadius={76}
-      outerRadius={108}
+      innerRadius={72}
+      outerRadius={104}
       paddingAngle={2}
       cornerRadius={10}
       labelLine={true} 
