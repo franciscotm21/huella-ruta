@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Label } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck } from "lucide-react";
 import jsPDF from "jspdf";
@@ -546,6 +546,155 @@ const exportarPDF = async () => {
 
   doc.save("reporte-huella.pdf");
 };
+
+// Colores fijos por categoría (elige los que prefieras)
+const COLOR_BY_CAT: Record<string, string> = {
+  "Transporte ida/regreso": "#10b981",   // verde
+  "Transporte local": "#0ea5e9", // celeste
+  "Alojamiento": "#f59e0b",     // amarillo/naranja
+  "Alimentación": "#ef4444",    // rojo
+  "Actividades": "#6366f1",     // violeta
+  "Residuos/Agua": "#14b8a6",   // teal
+};
+
+// Reconstruye la data del donut con el color correcto por nombre
+const donutData = React.useMemo(
+  () =>
+    (desglose ?? []).map((d) => ({
+      ...d,
+      color: COLOR_BY_CAT[d.name] ?? "#94a3b8", // gris si no está mapeado
+    })),
+  [desglose]
+);
+
+// Etiqueta externa: muestra "Nombre XX%" fuera de cada porción (oculta < 2%)
+function OutsideLabel(props: any) {
+  const { cx, cy, midAngle, outerRadius, percent, name } = props;
+  if (!percent || percent * 100 < 2) return null; // oculta porciones muy pequeñas
+  const RAD = Math.PI / 180;
+  const r = outerRadius + 14;
+  const x = cx + r * Math.cos(-midAngle * RAD);
+  const y = cy + r * Math.sin(-midAngle * RAD);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#0f172a"
+      textAnchor={x > cx ? "start" : "end"}
+      dominantBaseline="central"
+      fontFamily="Inter, ui-sans-serif, system-ui"
+      fontSize={20}
+    >
+      {name} {(percent * 100).toFixed(0)}%
+    </text>
+  );
+}
+
+// Texto centrado dentro del donut (usa Label content de Recharts)
+function CenterLabel({ viewBox }: any) {
+  const { cx, cy } = viewBox || { cx: 0, cy: 0 };
+  return (
+    <g>
+      <text
+        x={cx}
+        y={cy - 6}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="28"
+        fontFamily="Inter, ui-sans-serif, system-ui"
+        fontWeight={700}
+        fill="#0f172a"
+      >
+        {Number(totalKg || 0).toFixed(2)} kg
+      </text>
+      <text
+        x={cx}
+        y={cy + 14}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="14"
+        fontFamily="Inter, ui-sans-serif, system-ui"
+        fontWeight={500}
+        fill="#64748b"
+      >
+        CO₂e
+      </text>
+    </g>
+  );
+}
+
+// Tooltip: muestra "x.xx kg (yy%)"
+const tooltipFormatter = (value: number, _name: string, params: any) => {
+  const v = Number(value || 0);
+  const pct = totalKg ? (v / totalKg) * 100 : 0;
+  return [`${v.toFixed(2)} kg (${pct.toFixed(0)}%)`, ""]; // [valor, etiqueta]
+};
+
+// ---- Etiqueta exterior más pegada al donut
+const outerLabel = (props: any) => {
+  const RAD = Math.PI / 180;
+  const {
+    cx, cy, midAngle, outerRadius, percent, name,
+  } = props;
+if (!percent || percent * 100 < 2) return null; // oculta <2%
+
+  // Distancia desde el borde del donut a la etiqueta
+  // (baja este número para pegarla más)
+  const GAP = 25;                         // antes 12–14
+
+  const r = outerRadius + GAP;
+  const x = cx + r * Math.cos(-midAngle * RAD);
+  const y = cy + r * Math.sin(-midAngle * RAD);
+  const anchor = x >= cx ? 'start' : 'end';
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={anchor}
+      dominantBaseline="middle"
+      className="fill-slate-700"
+      style={{ fontSize: 13 }}
+    >
+      {name} {Math.round((percent ?? 0) * 100)}%
+    </text>
+  );
+};
+
+// Texto central del donut
+function CenterText({ viewBox, totalKg }: any) {
+  if (!viewBox || !viewBox.cx || !viewBox.cy) return null;
+
+  const { cx, cy } = viewBox;
+
+  return (
+    <g>
+      <text
+        x={cx}
+        y={cy - 5}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={28}
+        fontWeight="bold"
+        fill="#0f172a"
+      >
+        {totalKg.toFixed(2)} kg
+      </text>
+      <text
+        x={cx}
+        y={cy + 20}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={14}
+        fill="#475569"
+      >
+        CO₂e
+      </text>
+    </g>
+  );
+}
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
@@ -802,34 +951,51 @@ const exportarPDF = async () => {
                     </button>
                   </div>
                 </div>
-                <div className="order-1 md:order-2 h-72 overflow-visible">
-  <ResponsiveContainer width="100%" height="100%">
-    <PieChart>
-      <Pie
-        data={desglose}
-        dataKey="kg"
-        nameKey="name"          // 👈 necesario para que la etiqueta use el nombre
-        innerRadius={60}
-        outerRadius={90}
-        paddingAngle={3}
-        label={renderLabel}     // 👈 activa etiquetas externas
-        labelLine={true}        // 👈 dibuja la línea hacia la etiqueta
-      >
-        {desglose.map((_, index) => (
-          <Cell key={`cell-${index}`} fill={colores[index % colores.length]} />
-        ))}
-      </Pie>
+                <div className="order-1 md:order-2 overflow-visible">
+             <ResponsiveContainer width="100%" height={360}>
+  <PieChart margin={{ top: 10, right: 160, bottom: 10, left: 20 }}>
+    <defs>
+      <filter id="softShadow2" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.12" />
+      </filter>
+    </defs>
 
-      {/* Tooltip en kg + porcentaje (NO toneladas) */}
-      <Tooltip
-        formatter={(value: number, _name: any, p: any) => {
-          const pct = totalKg > 0 ? ((value / totalKg) * 100).toFixed(1) : "0.0";
-          // value llega en kg porque dataKey="kg"
-          return [`${value.toFixed(2)} kg (${pct}%)`, p.payload.name];
-        }}
+    <Pie
+      data={donutData}
+      dataKey="kg"
+      nameKey="name"
+      cx="66%"
+      cy="46%"
+      innerRadius={78}
+      outerRadius={110}
+      paddingAngle={2}
+      cornerRadius={10}
+      labelLine={true} 
+      label={outerLabel}
+      stroke="#ffffff"
+      strokeWidth={2}
+      isAnimationActive
+      animationDuration={600}
+      filter="url(#softShadow2)"
+    >
+      {donutData.map((entry, i) => (
+        <Cell key={`cell-${i}`} fill={entry.color} />
+      ))}
+
+      <Label
+        content={(props) => <CenterText {...props} totalKg={totalKg} />}
+        position="center"
       />
-    </PieChart>
-  </ResponsiveContainer>
+    </Pie>
+
+    <Tooltip
+      formatter={(v: number, n: string) => {
+        const pct = totalKg > 0 ? ((v / totalKg) * 100).toFixed(1) : "0.0";
+        return [`${v.toFixed(2)} kg (${pct}%)`, n];
+      }}
+    />
+  </PieChart>
+</ResponsiveContainer>
 </div>
 
               </div>

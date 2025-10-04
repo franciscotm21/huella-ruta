@@ -4,3 +4,7 @@
 @tailwind utilities;
 
 body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif; }
+/* Evitar que Recharts recorte las etiquetas que van fuera del gráfico */
+.recharts-wrapper {
+  overflow: visible !important;
+}
