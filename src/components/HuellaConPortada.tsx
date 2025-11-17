@@ -701,7 +701,7 @@ function CenterText({ viewBox, totalKg }: any) {
         <div className="flex items-center gap-3">
            <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
           <div>
-            <h1 className="text-2xl font-semibold">Huella de tu visita – Nevados de Chillán & Laguna del Laja</h1>
+            <h1 className="text-2xl font-semibold">Calcula tu huella de carbono - Reserva de Biósfera "Corredor Biológico Nevados de Chillán - Laguna del Laja"</h1>
             <p className="text-sm text-slate-500">Calcula tu impacto y recibe acciones locales para reducir y compensar.</p>
           </div>
         </div>
