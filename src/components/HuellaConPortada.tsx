@@ -29,146 +29,146 @@ const CITY_PRESET_KM_ONEWAY: Record<string, number> = {
 };
 // Destinos disponibles en tu selector
 const DESTINOS = [
-  "Las Trancas",
-  "Nevados de Chillán",
-  "San Fabián",
-  "Pinto",
-  "Yungay",
-  "El Carmen",
-  "Pemuco",
-  "Coihueco",
-  "Laguna del Laja",
+  "Pinto- Valle Las Trancas",
+  "Pinto- Nevados de Chillán",
+  "San Fabián - Pichirincón - Los Sauces",
+  "Pinto - Shangri-LA - Waldorf - Garganta del Diablo",
+  "Yungay - Ranchillo Alto - El Avellano",
+  "El Carmen - Atacalco - Los Riscos",
+  "Pemuco - Monteleón",
+  "Coihueco - Las Lumas - Reserva Huemules",
+  "Antuco- Laguna del Laja- Sierra Velluda",
 ];
 
 // Distancias de IDA (km) por combinación Origen → Destino principal
 // Aproximadas. Ajusta a tu metodología/localidad cuando quieras.
 const DIST_IDA_KM: Record<string, Record<string, number>> = {
   "Chillán": {
-    "Las Trancas": 70,
-    "Nevados de Chillán": 75,
-    "San Fabián": 86,
-    "Pinto": 38,
-    "Yungay": 65,
-    "El Carmen": 52,
-    "Pemuco": 60,
-    "Coihueco": 33,
-    "Laguna del Laja": 140,
+    "Pinto- Valle Las Trancas": 70,
+    "Pinto- Nevados de Chillán": 75,
+    "San Fabián - Pichirincón - Los Sauces": 86,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 38,
+    "Yungay - Ranchillo Alto - El Avellano": 65,
+    "El Carmen - Atacalco - Los Riscos": 52,
+    "Pemuco - Monteleón": 60,
+    "Coihueco - Las Lumas - Reserva Huemules": 33,
+    "Antuco- Laguna del Laja- Sierra Velluda": 140,
   },
   "Concepción": {
-    "Las Trancas": 210,
-    "Nevados de Chillán": 220,
-    "San Fabián": 230,
-    "Pinto": 165,
-    "Yungay": 150,
-    "El Carmen": 135,
-    "Pemuco": 140,
-    "Coihueco": 190,
-    "Laguna del Laja": 190,
+    "Pinto- Valle Las Trancas": 210,
+    "Pinto- Nevados de Chillán": 220,
+    "San Fabián - Pichirincón - Los Sauces": 230,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 165,
+    "Yungay - Ranchillo Alto - El Avellano": 150,
+    "El Carmen - Atacalco - Los Riscos": 135,
+    "Pemuco - Monteleón": 140,
+    "Coihueco - Las Lumas - Reserva Huemules": 190,
+    "Antuco- Laguna del Laja- Sierra Velluda": 190,
   },
   "Santiago": {
-    "Las Trancas": 470,
-    "Nevados de Chillán": 480,
-    "San Fabián": 505,
-    "Pinto": 445,
-    "Yungay": 430,
-    "El Carmen": 420,
-    "Pemuco": 425,
-    "Coihueco": 470,
-    "Laguna del Laja": 520,
+    "Pinto- Valle Las Trancas": 470,
+    "Pinto- Nevados de Chillán": 480,
+    "San Fabián - Pichirincón - Los Sauces": 505,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 445,
+    "Yungay - Ranchillo Alto - El Avellano": 430,
+    "El Carmen - Atacalco - Los Riscos": 420,
+    "Pemuco - Monteleón": 425,
+    "Coihueco - Las Lumas - Reserva Huemules": 470,
+    "Antuco- Laguna del Laja- Sierra Velluda": 520,
   },
   "Antofagasta": {
-    "Las Trancas": 1640,
-    "Nevados de Chillán": 1650,
-    "San Fabián": 1670,
-    "Pinto": 1630,
-    "Yungay": 1620,
-    "El Carmen": 1610,
-    "Pemuco": 1620,
-    "Coihueco": 1650,
-    "Laguna del Laja": 1700,
+    "Pinto- Valle Las Trancas": 1640,
+    "Pinto- Nevados de Chillán": 1650,
+    "San Fabián - Pichirincón - Los Sauces": 1670,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 1630,
+    "Yungay - Ranchillo Alto - El Avellano": 1620,
+    "El Carmen - Atacalco - Los Riscos": 1610,
+    "Pemuco - Monteleón": 1620,
+    "Coihueco - Las Lumas - Reserva Huemules": 1650,
+    "Antuco- Laguna del Laja- Sierra Velluda": 1700,
   },
   "Valparaíso": {
-    "Las Trancas": 520,
-    "Nevados de Chillán": 530,
-    "San Fabián": 555,
-    "Pinto": 500,
-    "Yungay": 485,
-    "El Carmen": 475,
-    "Pemuco": 480,
-    "Coihueco": 525,
-    "Laguna del Laja": 560,
+    "Pinto- Valle Las Trancas": 520,
+    "Pinto- Nevados de Chillán": 530,
+    "San Fabián - Pichirincón - Los Sauces": 555,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 500,
+    "Yungay - Ranchillo Alto - El Avellano": 485,
+    "El Carmen - Atacalco - Los Riscos": 475,
+    "Pemuco - Monteleón": 480,
+    "Coihueco - Las Lumas - Reserva Huemules": 525,
+    "Antuco- Laguna del Laja- Sierra Velluda": 560,
   },
   "Viña del Mar": {
-    "Las Trancas": 515,
-    "Nevados de Chillán": 515,
-    "San Fabián": 545,
-    "Pinto": 495,
-    "Yungay": 480,
-    "El Carmen": 470,
-    "Pemuco": 475,
-    "Coihueco": 520,
-    "Laguna del Laja": 555,
+    "Pinto- Valle Las Trancas": 515,
+    "Pinto- Nevados de Chillán": 515,
+    "San Fabián - Pichirincón - Los Sauces": 545,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 495,
+    "Yungay - Ranchillo Alto - El Avellano": 480,
+    "El Carmen - Atacalco - Los Riscos": 470,
+    "Pemuco - Monteleón": 475,
+    "Coihueco - Las Lumas - Reserva Huemules": 520,
+    "Antuco- Laguna del Laja- Sierra Velluda": 555,
   },
   "La Serena": {
-    "Las Trancas": 710,
-    "Nevados de Chillán": 720,
-    "San Fabián": 745,
-    "Pinto": 690,
-    "Yungay": 680,
-    "El Carmen": 670,
-    "Pemuco": 675,
-    "Coihueco": 720,
-    "Laguna del Laja": 760,
+    "Pinto- Valle Las Trancas": 710,
+    "Pinto- Nevados de Chillán": 720,
+    "San Fabián - Pichirincón - Los Sauces": 745,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 690,
+    "Yungay - Ranchillo Alto - El Avellano": 680,
+    "El Carmen - Atacalco - Los Riscos": 670,
+    "Pemuco - Monteleón": 675,
+    "Coihueco - Las Lumas - Reserva Huemules": 720,
+    "Antuco- Laguna del Laja- Sierra Velluda": 760,
   },
   "Temuco": {
-    "Las Trancas": 370,
-    "Nevados de Chillán": 380,
-    "San Fabián": 405,
-    "Pinto": 350,
-    "Yungay": 335,
-    "El Carmen": 325,
-    "Pemuco": 330,
-    "Coihueco": 375,
-    "Laguna del Laja": 260,
+    "Pinto- Valle Las Trancas": 370,
+    "Pinto- Nevados de Chillán": 380,
+    "San Fabián - Pichirincón - Los Sauces": 405,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 350,
+    "Yungay - Ranchillo Alto - El Avellano": 335,
+    "El Carmen - Atacalco - Los Riscos": 325,
+    "Pemuco - Monteleón": 330,
+    "Coihueco - Las Lumas - Reserva Huemules": 375,
+    "Antuco- Laguna del Laja- Sierra Velluda": 260,
   },
   "Rancagua": {
-    "Las Trancas": 420,
-    "Nevados de Chillán": 430,
-    "San Fabián": 455,
-    "Pinto": 400,
-    "Yungay": 390,
-    "El Carmen": 380,
-    "Pemuco": 385,
-    "Coihueco": 430,
-    "Laguna del Laja": 470,
+    "Pinto- Valle Las Trancas": 420,
+    "Pinto- Nevados de Chillán": 430,
+    "San Fabián - Pichirincón - Los Sauces": 455,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 400,
+    "Yungay - Ranchillo Alto - El Avellano": 390,
+    "El Carmen - Atacalco - Los Riscos": 380,
+    "Pemuco - Monteleón": 385,
+    "Coihueco - Las Lumas - Reserva Huemules": 430,
+    "Antuco- Laguna del Laja- Sierra Velluda": 470,
   },
   "Iquique": {
-    "Las Trancas": 1990,
-    "Nevados de Chillán": 2000,
-    "San Fabián": 2020,
-    "Pinto": 1980,
-    "Yungay": 1970,
-    "El Carmen": 1960,
-    "Pemuco": 1970,
-    "Coihueco": 2000,
-    "Laguna del Laja": 2050,
+    "Pinto- Valle Las Trancas": 1990,
+    "Pinto- Nevados de Chillán": 2000,
+    "San Fabián - Pichirincón - Los Sauces": 2020,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 1980,
+    "Yungay - Ranchillo Alto - El Avellano": 1970,
+    "El Carmen - Atacalco - Los Riscos": 1960,
+    "Pemuco - Monteleón": 1970,
+    "Coihueco - Las Lumas - Reserva Huemules": 2000,
+    "Antuco- Laguna del Laja- Sierra Velluda": 2050,
   },
   "Puerto Montt": {
-    "Las Trancas": 630,
-    "Nevados de Chillán": 640,
-    "San Fabián": 665,
-    "Pinto": 610,
-    "Yungay": 600,
-    "El Carmen": 590,
-    "Pemuco": 595,
-    "Coihueco": 640,
-    "Laguna del Laja": 520,
+    "Pinto- Valle Las Trancas": 630,
+    "Pinto- Nevados de Chillán": 640,
+    "San Fabián - Pichirincón - Los Sauces": 665,
+    "Pinto - Shangri-LA - Waldorf - Garganta del Diablo": 610,
+    "Yungay - Ranchillo Alto - El Avellano": 600,
+    "El Carmen - Atacalco - Los Riscos": 590,
+    "Pemuco - Monteleón": 595,
+    "Coihueco - Las Lumas - Reserva Huemules": 640,
+    "Antuco- Laguna del Laja- Sierra Velluda": 520,
   },
 };
 
 
 // Factores (ejemplos)
-const F_TRANSP = { auto_gasolina:0.18, auto_diesel:0.20, auto_hibrido:0.11, kwh_100km:17, grid:0.35, bus:0.06, avion:0.15, van_local:0.10, moto_nieve_h:8.0, snowcat_h:4.0 };
+const F_TRANSP = { auto_gasolina:0.18, auto_diesel:0.20, auto_hibrido:0.11, kwh_100km:17, grid:0.35, bus:0.06, avion:0.15, van_local:0.10, moto_nieve_h:18.0, snowcat_h:4.0, motocicleta_verano:0.12, cuadrimoto_verano:0.24 }
 const F_ALOJA = { hotel:9.0, hostal:6.0, cabana:5.5, camping:2.0, cal:{lena:3.0, gas:2.0, diesel:3.5, elec:1.5, ninguna:0.5} };
 const F_ALIM = { locales:2.5, cadenas:3.2, auto:1.6, bonus_local:-0.6 };
 const F_ACT = { ski:2.5, trekking:0.3, cabalgata:1.0, mtb:0.6, raquetas:0.4, canopy:0.8, moto:8.0, otro:0.8 };
@@ -289,6 +289,9 @@ function Calculadora(){
     if (st.transporte.uso_local.includes("Traslado en van/bus")) localKg += km_local*F_TRANSP.van_local;
     if (st.transporte.uso_local.includes("Moto de nieve")) localKg += 2*F_TRANSP.moto_nieve_h;
     if (st.transporte.uso_local.includes("Snowcat/andarivel")) localKg += 2*F_TRANSP.snowcat_h;
+    if (st.transporte.uso_local.includes("Motocicleta (verano)")) localKg += km_local * F_TRANSP.motocicleta_verano;
+    if (st.transporte.uso_local.includes("Cuadrimoto (verano)")) localKg += km_local * F_TRANSP.cuadrimoto_verano;
+
 
     const noches = st.alojamiento.noches;
     const share = Math.max(1, st.alojamiento.personas_total);
@@ -697,22 +700,42 @@ function CenterText({ viewBox, totalKg }: any) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
-      <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-           <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
-          <div>
-            <h1 className="text-2xl font-semibold">Calcula tu huella de carbono - Reserva de Biósfera "Corredor Biológico Nevados de Chillán - Laguna del Laja"</h1>
-            <p className="text-sm text-slate-500">Calcula tu impacto y recibe acciones locales para reducir y compensar.</p>
-          </div>
-        </div>
-        <div className="hidden md:flex gap-2 text-sm">
-          {PASOS.map((s,i)=>(
-            <div key={s.key} className={`px-3 py-1 rounded-full border ${i===paso?"bg-emerald-600 text-white border-emerald-600":"bg-white text-slate-600 border-slate-200"}`}>
-              <span className="inline-flex items-center gap-1">{s.icon}{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </header>
+      <header className="max-w-6xl mx-auto px-4 py-6">
+
+  {/* FILA 1: Texto + Logo arriba ocupando TODO el ancho */}
+  <div className="flex items-start gap-3 mb-4">
+    <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
+    <div>
+      <h1 className="text-3xl font-semibold leading-tight">
+        Calcula tu huella de carbono - Reserva de Biósfera
+        "Corredor Biológico Nevados de Chillán - Laguna del Laja"
+      </h1>
+      <p className="text-sm text-slate-500 mt-3">
+        Calcula tu impacto y recibe acciones locales para reducir y compensar.
+      </p>
+    </div>
+  </div>
+
+  {/* FILA 2: Indicadores ABAJO, horizontal */}
+  <div className="flex flex-wrap gap-3 text-sm justify-start md:justify-end">
+    {PASOS.map((s, i) => (
+      <div
+        key={s.key}
+        className={`px-4 py-2 rounded-full border ${
+          i === paso
+            ? "bg-emerald-600 text-white border-emerald-600"
+            : "bg-white text-slate-600 border-slate-200"
+        }`}
+      >
+        <span className="inline-flex items-center gap-2">
+          {s.icon}
+          {s.label}
+        </span>
+      </div>
+    ))}
+  </div>
+
+</header>
 
       <div className="max-w-5xl mx-auto px-4">
         <div className="rounded-2xl overflow-hidden mb-6">
@@ -738,7 +761,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div>
                   <label className="text-sm">Destino principal</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.destino} onChange={e=>set("id.destino", e.target.value)}>
-                    {["Las Trancas","Nevados de Chillán","San Fabián","Pinto","Yungay","El Carmen","Pemuco","Coihueco","Laguna del Laja","Otro"].map(x=>(<option key={x} value={x}>{x}</option>))}
+                    {["Pinto- Valle Las Trancas","Pinto- Nevados de Chillán","San Fabián - Pichirincón - Los Sauces","Pinto - Shangri-LA - Waldorf - Garganta del Diablo","Yungay - Ranchillo Alto - El Avellano","El Carmen - Atacalco - Los Riscos","Pemuco - Monteleón","Coihueco - Las Lumas - Reserva Huemules","Antuco- Laguna del Laja- Sierra Velluda","Otro"].map(x=>(<option key={x} value={x}>{x}</option>))}
                   </select>
                 </div>
                 <div className="sm:col-span-2">
@@ -778,7 +801,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div className="sm:col-span-2">
                   <label className="text-sm">Transporte local utilizado</label>
                   <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    {["Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Bicicleta","A pie","Otro"].map(opt=>(
+                    {["Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Bicicleta","A pie","Motocicleta (verano)","Cuadrimoto (verano)","Otro"].map(opt=>(
                       <label key={opt} className="flex items-center gap-2">
                         <input type="checkbox" checked={st.transporte.uso_local.includes(opt)} onChange={e=>{
                           const setSel = new Set(st.transporte.uso_local);
