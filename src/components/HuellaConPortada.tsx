@@ -717,7 +717,8 @@ function CenterText({ viewBox, totalKg }: any) {
   </div>
 
   {/* FILA 2: Indicadores ABAJO, horizontal */}
-  <div className="flex flex-wrap gap-3 text-sm justify-start md:justify-end">
+    <div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start">
+
     {PASOS.map((s, i) => (
       <div
         key={s.key}
