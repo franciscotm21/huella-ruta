@@ -20,13 +20,22 @@ const PASOS = [
   { key: "resultado", label: "Resultado", icon: <Leaf className="w-4 h-4" /> },
 ];
 
-// Distancias ida (km) - ajusta a tu metodología
+
 const CITY_PRESET_KM_ONEWAY: Record<string, number> = {
-  "Chillán": 75, "Concepción": 220, "Santiago": 480,
-  "Antofagasta": 0, "Valparaíso": 0, "Viña del Mar": 0,
-  "La Serena": 0, "Temuco": 0, "Rancagua": 0,
-  "Iquique": 0, "Puerto Montt": 0, "Otra": 0,
+  "Chillán": 0,
+  "Concepción": 0,
+  "Santiago": 0,
+  "Antofagasta": 0,
+  "Valparaíso": 0,
+  "Viña del Mar": 0,
+  "La Serena": 0,
+  "Temuco": 0,
+  "Rancagua": 0,
+  "Iquique": 0,
+  "Puerto Montt": 0,
+  "Otra": 0,
 };
+
 // Destinos disponibles en tu selector
 const DESTINOS = [
   "Pinto- Valle Las Trancas",
@@ -175,7 +184,7 @@ const F_ACT = { ski:2.5, trekking:0.3, cabalgata:1.0, mtb:0.6, raquetas:0.4, can
 const F_RES = { manejo:{sep:0.2, comunes:0.6, regreso:0.1, otro:0.5}, agua:{prom:0.5, bajo:0.2, alto:0.9} };
 
 const ESTADO_INICIAL = {
-  id: { origen:"Chillán", destino:"Nevados de Chillán", km_personalizado:0 },
+  id: { origen:"Chillán", destino:"Pinto- Nevados de Chillán", km_personalizado:0 },
   transporte: { medio:"Auto gasolina", pasajeros_auto:2, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_total:20 },
   alojamiento: { tipo:"Cabaña", noches:2, calefaccion:"Leña", personas_total:2 },
   alimentacion: { donde:"Restaurantes locales", productos_locales:true, dias:2 },
@@ -352,7 +361,7 @@ function Calculadora(){
 
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
     "Transporte ida/regreso": [
-      { icon:<Car className="w-4 h-4"/>, titulo:"Comparte el auto", texto:"Llena los asientos: baja el CO₂e por persona."},
+      { icon:<Car className="w-4 h-4"/>, titulo:"Comparte el auto", texto:"Llena los asientos: baja el CO2 por persona."},
       { icon:<Plane className="w-4 h-4"/>, titulo:"Combina bus + avión", texto:"Reduce el tramo aéreo cuando sea posible."},
       { icon:<Bike className="w-4 h-4"/>, titulo:"Elige rutas cercanas", texto:"Prefiere destinos del corredor más próximos."},
     ],
@@ -417,137 +426,263 @@ async function fileToDataURL(path: string): Promise<string | null> {
   }
 };
 
+// =====================================================
+// PALETA DE COLORES (RGB explícito SIN SPREADS)
+// =====================================================
+const COLOR = {
+  emeraldDark: { r: 16, g: 120, b: 96 },
+  emerald: { r: 16, g: 185, b: 129 },
+  emeraldLight: { r: 209, g: 250, b: 229 },
+
+  slateDark: { r: 51, g: 65, b: 85 },
+  slate: { r: 71, g: 85, b: 105 },
+  slateLight: { r: 100, g: 116, b: 139 },
+
+  white: { r: 255, g: 255, b: 255 }
+};
+
+
+// =====================================================
+// EXPORTAR PDF PREMIUM (FINAL, SIN ERRORES)
+// =====================================================
 const exportarPDF = async () => {
-  // Colores (Tailwind-ish)
-  const emerald = [16, 185, 129] as const;
-  const slate   = [71, 85, 105] as const;
-
   const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const pageW = doc.internal.pageSize.getWidth();
+  const docAny = doc as any; // para lastAutoTable, textWithLink, etc. sin pelear con TS
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
 
-  // Header: banda de color
-  doc.setFillColor(...emerald);
-  doc.rect(0, 0, pageW, 80, "F");
+  // === HEADER SUPERIOR ===
+  doc.setFillColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+  doc.rect(0, 0, W, 90, "F");
 
-  // Logo (opcional)
-  const logo = await fileToDataURL("/logo.png"); // cambia si tu ruta es otra
-  if (logo) {
-    try {
-      doc.addImage(logo, "PNG", 26, 16, 120, 48); // x,y,w,h
-    } catch {
-      // si falla, seguimos sin logo
-    }
-  }
+  try {
+    const logo = await fileToDataURL("/logo.png");
+    if (logo) doc.addImage(logo, "PNG", 30, 18, 80, 55);
+  } catch {}
 
-  // Título
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("Reporte de Huella de Carbono", logo ? 160 : 26, 40);
+  doc.setFontSize(22);
+  doc.text("Reporte de Huella de Carbono", 130, 40);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.text("Corredor Biológico Nevados de Chillán – Laguna del Laja", 130, 60);
+
+
+  // === CAJA RESUMEN ===
+
+  const cardX = 30;
+  const cardY = 110;
+  const cardW = W - 60;
+  const cardH = 110;
+  const cardCenterX = cardX + cardW / 2;
+
+  doc.setFillColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
+  doc.setDrawColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+  doc.roundedRect(30, 110, W - 60, 110, 12, 12, "FD");
+
+  doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Huella estimada de tu visita", 50, 140);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(36);
+  doc.setTextColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+  doc.text(`${totalKg.toFixed(2)} kg CO2`, cardCenterX, 180, {
+    align: "center"
+  } as any);
+
+
+  // === UBICACIÓN ===
+  const baseKmMostrar = Math.round(baseKm);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text("Corredor Biológico Nevados de Chillán – Laguna del Laja", logo ? 160 : 26, 58);
+  doc.setTextColor(COLOR.slateLight.r, COLOR.slateLight.g, COLOR.slateLight.b);
+  doc.text(
+    `Origen: ${st.id.origen}   ·   Destino: ${st.id.destino}   ·   Distancia ida: ${baseKmMostrar} km`,
+    50,
+    212
+  );
 
-  // Caja resumen total
-  doc.setDrawColor(...emerald);
-  doc.setLineWidth(1);
-  doc.setTextColor(...slate);
-  doc.roundedRect(26, 100, pageW - 52, 80, 10, 10);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.text("Huella estimada de tu visita", 40, 125);
 
-  // totalKg viene en kg (ya hiciste el cambio). Muestra grande:
-  doc.setFontSize(28);
-  doc.setTextColor(17, 94, 89); // un verde oscuro
-  doc.text(`${(totalKg).toFixed(2)} kg CO₂e`, 40, 160);
-  doc.setTextColor(...slate);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Equivalente a ${(totalKg).toFixed(1)} kg CO₂e`, 40, 178);
-
-  // Breve contexto del viaje (si tienes baseKm/origen/destino)
-  try {
-    // Si en tu useMemo retornas baseKm, úsalo; si no, muestra km_personalizado:
-    const baseKmMostrar =
-      typeof baseKm !== "undefined"
-        ? Math.round(baseKm)
-        : (st?.id?.km_personalizado ? Math.round(st.id.km_personalizado) : 0);
-
-    doc.setFontSize(10);
-    doc.text(
-      `Origen: ${st?.id?.origen ?? "-"}   ·   Destino: ${st?.id?.destino ?? "-"}   ·   Distancia ida: ${baseKmMostrar} km`,
-      40,
-      196
-    );
-  } catch {
-    // sin bloqueo si no tienes baseKm
-  }
-
-  // Tabla de desglose
-  const startY = 220;
-  const rows = desglose.map((d: any) => {
+  // === TABLA DESGLOSE ===
+  const rows = desglose.map((d) => {
     const pct = totalKg > 0 ? ((d.kg / totalKg) * 100).toFixed(1) + "%" : "0%";
     return [d.name, `${d.kg.toFixed(2)} kg`, pct];
   });
 
   autoTable(doc, {
-    head: [["Categoría", "Emisiones", "Participación"]],
+    head: [["Categoría", "Emisiones", "Participación"]], 
     body: rows,
-    startY,
-    styles: { font: "helvetica", fontSize: 10, textColor: slate as any },
-    headStyles: { fillColor: emerald as any, textColor: [255, 255, 255] },
-    bodyStyles: { fillColor: [248, 250, 252] }, // slate-50
-    alternateRowStyles: { fillColor: [255, 255, 255] },
+    startY: 240,
+    styles: {
+      font: "helvetica",
+      fontSize: 10,
+      textColor: [COLOR.slate.r, COLOR.slate.g, COLOR.slate.b]
+    },
+    headStyles: {
+      fillColor: [COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b],
+      textColor: [COLOR.white.r, COLOR.white.g, COLOR.white.b],
+      fontStyle: "bold"
+    },
+    bodyStyles: {
+      fillColor: [248, 250, 252]
+    },
+    alternateRowStyles: {
+      fillColor: [255, 255, 255]
+    },
+    margin: { left: 30, right: 30 },
     columnStyles: {
       0: { cellWidth: 220 },
       1: { halign: "right" },
-      2: { halign: "right" },
-    },
-    margin: { left: 26, right: 26 },
+      2: { halign: "right" }
+    }
   });
 
-  // Acciones recomendadas (toma de accionesPorCategoria o acciones)
-  const yAfter = (doc as any).lastAutoTable?.finalY
-    ? (doc as any).lastAutoTable.finalY + 24
-    : startY + 24;
 
+  // =====================================================
+  // ACCIONES RECOMENDADAS (VERSIÓN MEJORADA)
+  // =====================================================
+  let yAcc = 0;
+
+  if (docAny.lastAutoTable && docAny.lastAutoTable.finalY) {
+    yAcc = docAny.lastAutoTable.finalY + 30;
+  } else {
+    yAcc = 240 + 30;
+  }
+
+  // Título de la sección
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(...slate);
-  doc.text(`Acciones recomendadas (mayor contribución: ${topCat})`, 26, yAfter);
+  doc.setFontSize(14);
+  doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+  doc.text(`Acciones recomendadas (mayor contribución: ${topCat})`, 30, yAcc);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  const listaAcciones =
-    (typeof acciones !== "undefined" && acciones?.[topCat]) ||
-    (typeof acciones !== "undefined" && acciones?.[topCat]) ||
-    [];
+  yAcc += 18;
 
-  let y = yAfter + 16;
-  listaAcciones.forEach((a: any) => {
-    // punto
-    doc.setDrawColor(...emerald);
-    doc.setFillColor(...emerald);
-    doc.circle(30, y - 4, 2.5, "F");
-    // título
-    doc.setFont("helvetica", "bold");
-    doc.text(a.titulo, 40, y);
-    y += 14;
-    // texto
+  const lista = acciones[topCat] || [];
+
+  if (!lista.length) {
     doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(a.texto, pageW - 80);
-    doc.text(lines, 40, y);
-    y += lines.length * 12 + 6;
-  });
+    doc.setFontSize(11);
+    doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
+    doc.text(
+      "Revisa en la calculadora consejos personalizados para reducir tu huella en esta categoría.",
+      30,
+      yAcc
+    );
+  } else {
+    const cardMarginX = 30;
+    const cardWidth = W - 60;
 
-  // Footer
-  const fecha = new Date().toLocaleString();
+    lista.forEach((a, idx) => {
+      // Si se acerca al final de la página, saltar a nueva
+      const espacioMinimo = 120; // espacio mínimo para una tarjeta
+      if (yAcc + espacioMinimo > H - 60) {
+        doc.addPage();
+        yAcc = 60;
+      }
+
+      // Texto principal de la acción
+      const titulo = a.titulo || `Acción ${idx + 1}`;
+      const texto = a.texto || "";
+      const impacto = (a as any).impacto as string | undefined; // opcional: "Reduce hasta un 20% tu huella"
+      const link = (a as any).link as string | undefined;       // opcional: URL con más info
+
+      // Calcula alto de la tarjeta según contenido
+      const contenidoYBase = yAcc + 32; // donde empieza el texto descriptivo
+      const wrapped = doc.splitTextToSize(
+        texto,
+        cardWidth - 60 // margen interior de la tarjeta
+      );
+      let cardHeight = 50 + wrapped.length * 12; // base estimada
+
+      if (impacto) cardHeight += 14;
+      if (link) cardHeight += 16;
+
+      // Fondo de tarjeta
+      doc.setFillColor(COLOR.emeraldLight.r, COLOR.emeraldLight.g, COLOR.emeraldLight.b);
+      doc.roundedRect(cardMarginX, yAcc, cardWidth, cardHeight, 10, 10, "F");
+
+      // Número dentro de círculo (marcador dinámico)
+      const iconCenterX = cardMarginX + 20;
+      const iconCenterY = yAcc + 20;
+      doc.setFillColor(COLOR.emerald.r, COLOR.emerald.g, COLOR.emerald.b);
+      doc.circle(iconCenterX, iconCenterY, 10, "F");
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
+      // número centrado aprox.
+      doc.text(String(idx + 1), iconCenterX - 3, iconCenterY + 3);
+
+      // Título de la acción
+      doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+      doc.setFontSize(12);
+      doc.text(titulo, cardMarginX + 40, yAcc + 18);
+
+      let textoY = contenidoYBase;
+
+      // Impacto (si existe)
+      if (impacto) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+        doc.text(`Impacto estimado: ${impacto}`, cardMarginX + 40, yAcc + 34);
+        textoY = yAcc + 50;
+      }
+
+      // Descripción
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
+      doc.text(wrapped, cardMarginX + 40, textoY);
+
+      let afterTextoY = textoY + wrapped.length * 12;
+
+      // Link “interactivo” (clicable en el PDF) si existe
+      if (link) {
+        const linkLabel = "Ver guía o recurso en línea";
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+
+        // texto subrayado como link
+        const linkX = cardMarginX + 40;
+        const linkY = afterTextoY + 10;
+        doc.text(linkLabel, linkX, linkY);
+        const linkWidth = doc.getTextWidth(linkLabel);
+        doc.setDrawColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+        doc.setLineWidth(0.5);
+        doc.line(linkX, linkY + 1, linkX + linkWidth, linkY + 1);
+
+        // hace el texto clicable
+        try {
+          docAny.textWithLink(linkLabel, linkX, linkY, { url: link });
+        } catch {
+          // si textWithLink no existe, el PDF al menos muestra la URL como texto
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(COLOR.slateLight.r, COLOR.slateLight.g, COLOR.slateLight.b);
+          doc.text(link, linkX, linkY + 12);
+        }
+
+        afterTextoY = linkY + 16;
+      }
+
+      // Avanzar para la siguiente tarjeta
+      yAcc = Math.max(yAcc + cardHeight + 12, afterTextoY + 12);
+    });
+  }
+
+
+  // === FOOTER ===
   doc.setFontSize(9);
-  doc.setTextColor(120, 120, 120);
-  doc.text(`Generado el ${fecha} · huellarutas.cl`, 26, 820);
+  doc.setTextColor(COLOR.slateLight.r, COLOR.slateLight.g, COLOR.slateLight.b);
+  doc.text(`Generado el ${new Date().toLocaleString()}`, 30, H - 30);
 
-  doc.save("reporte-huella.pdf");
+  doc.save("reporte-huella-premium.pdf");
 };
 
 // Colores fijos por categoría (elige los que prefieras)
@@ -707,8 +842,8 @@ function CenterText({ viewBox, totalKg }: any) {
     <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
     <div>
       <h1 className="text-3xl font-semibold leading-tight">
-        Calcula tu huella de carbono - Reserva de Biósfera
-        "Corredor Biológico Nevados de Chillán - Laguna del Laja"
+        Calcula tu huella de carbono - 
+        Reserva de Biósfera "Corredor Biológico Nevados de Chillán - Laguna del Laja"
       </h1>
       <p className="text-sm text-slate-500 mt-3">
         Calcula tu impacto y recibe acciones locales para reducir y compensar.
@@ -735,7 +870,7 @@ function CenterText({ viewBox, totalKg }: any) {
       </div>
     ))}
   </div>
-
+ 
 </header>
 
       <div className="max-w-5xl mx-auto px-4">
@@ -756,13 +891,13 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div>
                   <label className="text-sm">Ciudad/punto de origen</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.origen} onChange={e=>set("id.origen", e.target.value)}>
-                    {Object.keys(CITY_PRESET_KM_ONEWAY).map(c=>(<option key={c} value={c}>{c}</option>))}
+                    {Object.keys(DIST_IDA_KM).concat("Otra").map(c => (<option key={c} value={c}>{c}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="text-sm">Destino principal</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.destino} onChange={e=>set("id.destino", e.target.value)}>
-                    {["Pinto- Valle Las Trancas","Pinto- Nevados de Chillán","San Fabián - Pichirincón - Los Sauces","Pinto - Shangri-LA - Waldorf - Garganta del Diablo","Yungay - Ranchillo Alto - El Avellano","El Carmen - Atacalco - Los Riscos","Pemuco - Monteleón","Coihueco - Las Lumas - Reserva Huemules","Antuco- Laguna del Laja- Sierra Velluda","Otro"].map(x=>(<option key={x} value={x}>{x}</option>))}
+                    {DESTINOS.concat("Otro").map(x => (<option key={x} value={x}>{x}</option>))}
                   </select>
                 </div>
                 <div className="sm:col-span-2">
@@ -790,7 +925,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 {st.transporte.medio.startsWith("Auto") && (
                   <div>
                     <label className="text-sm">Pasajeros (incluyéndote)</label>
-                    <input type="number" min={1} className="mt-1 w-full border rounded-md px-3 py-2" value={st.transporte.pasajeros_auto} onChange={e=>set("transporte.pasajeros_auto", Number(e.target.value||1))} />
+                    <input type="number" min={1} className="mt-1 w-full border rounded-md px-3 py-2" value={st.transporte.pasajeros_auto} onChange={e=>{const v = Math.min(8, Math.max(1, Number(e.target.value||1))); set("transporte.pasajeros_auto", v);}} />
                   </div>
                 )}
                 {st.transporte.medio==="Auto eléctrico" && (
