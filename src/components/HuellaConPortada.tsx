@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { trackEvent } from "@/lib/analytics"; // ajusta la ruta según tu estructura
+
 
 // ===== UTIL =====
 const fmt = (n: number) => Intl.NumberFormat("es-CL", { maximumFractionDigits: 1 }).format(n);
@@ -192,6 +194,8 @@ const ESTADO_INICIAL = {
   residuosagua: { manejo:"Separé y reciclé", agua:"Promedio (no sé)", dias:2 },
 };
 
+
+
 // Reusable card
 function Card({children}:{children:React.ReactNode}){
   return <div className="shadow-lg rounded-2xl border border-slate-200">{children}</div>;
@@ -228,7 +232,14 @@ export default function HuellaConPortada(){
                 Mide tu huella. <span className="text-emerald-300">Actúa</span>. Disfruta la ruta.
               </motion.h1>
               <p className="mt-5 text-lg text-white/90">Calcula tu huella de carbono para tu visita a la Reserva de Biósfera "Corredor Biológico Nevados de Chillán – Laguna del Laja"  y recibe acciones de compensación para compensar tu huella.</p>
-              <motion.button onClick={()=>setStart(true)} whileTap={{ scale: 0.97 }} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-white/95 px-8 py-4 font-semibold text-gray-900 shadow-lg hover:bg-white">
+              <motion.button onClick={()=>{
+    // 🔹 Evento GA: el usuario inicia la calculadora solo agrega un "}" al final de setStart
+    trackEvent("calculator_start", {
+      category: "Calculadora",
+      origen_inicial: "Chillán",             // opcional, solo info extra
+      destino_inicial: "Pinto- Nevados de Chillán",
+    });
+setStart(true)}} whileTap={{ scale: 0.97 }} className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-white/95 px-8 py-4 font-semibold text-gray-900 shadow-lg hover:bg-white">
                 🚀 Comenzar ahora
               </motion.button>
             </div>
@@ -446,6 +457,14 @@ const COLOR = {
 // EXPORTAR PDF PREMIUM (FINAL, SIN ERRORES)
 // =====================================================
 const exportarPDF = async () => {
+  // 🔹 Evento GA: exportación de PDF
+  trackEvent("pdf_export", {
+    category: "Export",
+    origen: st.id.origen,
+    destino: st.id.destino,
+    totalKg,
+    mayor_categoria: topCat,
+  });
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const docAny = doc as any; // para lastAutoTable, textWithLink, etc. sin pelear con TS
   const W = doc.internal.pageSize.getWidth();
@@ -833,6 +852,36 @@ function CenterText({ viewBox, totalKg }: any) {
   );
 }
 
+// 👇 Paso 2 integración analítica de google
+  const handleSiguientePaso = () => {
+    setPaso((prevPaso) => {
+      const nextPaso = Math.min(PASOS.length - 1, prevPaso + 1);
+
+      // 👇 Aquí detectamos el salto de PASO 5 → PASO 6 (Resultado)
+      if (prevPaso === 5 && nextPaso === 6) {
+        // Evento: el usuario terminó el flujo (equivalente a "submit")
+        trackEvent("calculator_submit", {
+          category: "Calculadora",
+          origen: st.id.origen,
+          destino: st.id.destino,
+          km_ida: Math.round(baseKm),
+          noches: st.alojamiento.noches,
+          dias_estadia: st.residuosagua.dias,
+        });
+
+        // Evento: cálculo exitoso con el resultado numérico
+        trackEvent("calculator_success", {
+          category: "Calculadora",
+          totalKg,
+          totalTons,
+          mayor_categoria: topCat,
+        });
+      }
+
+      return nextPaso;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6">
@@ -1163,7 +1212,7 @@ function CenterText({ viewBox, totalKg }: any) {
         )}
 
         <div className="flex items-center justify-between my-6">
-          <button onClick={()=>setPaso(p=>Math.max(0,p-1))} disabled={paso===0} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"><ChevronLeft className="w-4 h-4" /> Atrás</button>
+          <button onClick={handleSiguientePaso} disabled={paso===0} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"><ChevronLeft className="w-4 h-4" /> Atrás</button>
           <div className="text-sm text-slate-500">Paso {paso+1} de {PASOS.length}</div>
           <button onClick={()=>setPaso(p=>Math.min(PASOS.length-1,p+1))} disabled={paso===PASOS.length-1} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50">Siguiente <ChevronRight className="w-4 h-4" /></button>
         </div>
