@@ -257,6 +257,9 @@ setStart(true)}} whileTap={{ scale: 0.97 }} className="mt-8 inline-flex items-ce
 function Calculadora(){
   const [paso,setPaso] = useState(0);
   const [st,setSt] = useState(ESTADO_INICIAL);
+
+    const [tabResultados, setTabResultados] = useState<"desglose" | "acciones">("desglose");
+
   // Banner por cada paso del formulario
   const bannerMap: Record<number, string> = {
     0: "/foto-identificacion.jpg",
@@ -361,6 +364,14 @@ function Calculadora(){
     return { desglose, totalKg, totalTons: totalKg/1000, topCat: top.name, baseKm };
   },[st]);
 
+   // === Equivalencias simples a partir del total ===
+  const kmAutoEquivalentes = totalKg / 0.18;
+  const arbolesEquivalentes = totalKg / 100; 
+
+   // % que representa la categoría de mayor contribución
+  const topEntry = desglose.find((d) => d.name === topCat);
+  const topPct = topEntry && totalKg > 0 ? (topEntry.kg / totalKg) * 100 : 0;
+  
   const colores = ["#10b981","#0ea5e9","#f59e0b","#ef4444","#6366f1","#14b8a6"];
 
   const exportar = () => {
@@ -1114,123 +1125,374 @@ function CenterText({ viewBox, totalKg }: any) {
             </CardContent>
           </Card>
         )}
-
-        {paso===6 && (
+   {/* 🔽 Paso 6: resultado moderno */}
+        {paso === 6 && (
           <Card>
-            <CardHeader title="Resultado y acciones" icon={<Leaf/>} subtitle="Desglose por categoría, total y recomendaciones dinámicas." />
+            <CardHeader
+              title="Resultado y acciones"
+              icon={<Leaf />}
+              subtitle="Visualiza el impacto de tu visita, el desglose por categoría y las acciones con mayor efecto para reducir tu huella."
+            />
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6 items-center">
-                <div className="order-2 md:order-1">
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-                    <div className="text-sm text-emerald-700">Huella estimada de tu visita</div>
-                    <div className="text-4xl font-bold text-emerald-800">{totalKg.toFixed(2)} kg CO₂e</div>
-                    <div className="text-xs text-slate-500 mt-1">Equivalente a {fmt(totalKg)} kg CO₂e</div>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex gap-2 text-sm mb-2">
-                      <span className="px-3 py-1 rounded-full bg-slate-100">Desglose</span>
-                      <span className="px-3 py-1 rounded-full bg-slate-100">Acciones</span>
+              <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] gap-8 items-start">
+                {/* Columna izquierda: donut + tabs */}
+                <div className="space-y-5 order-2 lg:order-1">
+                  {/* Donut */}
+                  <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-slate-400">
+                          Distribución de tu huella
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Cómo se reparte tu impacto entre las distintas
+                          categorías.
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                        <Leaf className="w-3 h-3" />
+                        Vista detallada
+                      </span>
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {desglose.map((b,i)=>(
-                        <li key={b.name} className="flex justify-between py-1 border-b border-slate-100">
-                          <span className="inline-flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{background:colores[i%colores.length]}} />{b.name}</span>
-                           <span>{b.kg.toFixed(2)} kg</span>
+
+                    <div
+                      className="mt-2"
+                      style={{
+                        transform: "scale(0.95)",
+                        transformOrigin: "center",
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart margin={{ top: 8, right: 120, bottom: 8, left: 8 }}>
+                          <defs>
+                            <filter
+                              id="softShadow2"
+                              x="-20%"
+                              y="-20%"
+                              width="140%"
+                              height="140%"
+                            >
+                              <feDropShadow
+                                dx="0"
+                                dy="3"
+                                stdDeviation="3"
+                                floodColor="#000000"
+                                floodOpacity="0.12"
+                              />
+                            </filter>
+                          </defs>
+
+                          <Pie
+                            data={donutData}
+                            dataKey="kg"
+                            nameKey="name"
+                            cx="64%"
+                            cy="48%"
+                            innerRadius={70}
+                            outerRadius={104}
+                            paddingAngle={2}
+                            cornerRadius={10}
+                            labelLine
+                            label={outerLabel}
+                            stroke="#ffffff"
+                            strokeWidth={2}
+                            isAnimationActive
+                            animationDuration={600}
+                            filter="url(#softShadow2)"
+                          >
+                            {donutData.map((entry, i) => (
+                              <Cell key={entry.name + i} fill={entry.color} />
+                            ))}
+
+                            <Label
+                              content={(props) => (
+                                <CenterText {...props} totalKg={totalKg} />
+                              )}
+                              position="center"
+                            />
+                          </Pie>
+
+                          <Tooltip formatter={tooltipFormatter} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Tabs: Desglose / Acciones clave */}
+                  <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4">
+                    <div className="inline-flex rounded-full bg-slate-100 p-1 text-xs mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setTabResultados("desglose")}
+                        className={`px-4 py-1.5 rounded-full transition ${
+                          tabResultados === "desglose"
+                            ? "bg-white shadow-sm text-slate-900"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        Desglose
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTabResultados("acciones")}
+                        className={`px-4 py-1.5 rounded-full transition ${
+                          tabResultados === "acciones"
+                            ? "bg-white shadow-sm text-slate-900"
+                            : "text-slate-500"
+                        }`}
+                      >
+                        Acciones clave
+                      </button>
+                    </div>
+
+                    {tabResultados === "desglose" ? (
+                      <div className="space-y-3">
+                        {desglose.map((b, i) => {
+                          const pct =
+                            totalKg > 0 ? (b.kg / totalKg) * 100 : 0;
+                          const isTop = b.name === topCat;
+                          return (
+                            <div
+                              key={b.name}
+                              className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2 ${
+                                isTop
+                                  ? "bg-emerald-50 border border-emerald-200"
+                                  : "bg-slate-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className="w-3.5 h-3.5 rounded-full"
+                                  style={{
+                                    background:
+                                      colores[i % colores.length],
+                                  }}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-slate-800">
+                                    {b.name}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500">
+                                    {pct.toFixed(1)}% del total
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-slate-900">
+                                  {b.kg.toFixed(2)} kg
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-slate-500">
+                          En tu viaje,{" "}
+                          <span className="font-semibold text-slate-800">
+                            {topCat}
+                          </span>{" "}
+                          concentra aproximadamente{" "}
+                          <span className="font-semibold text-slate-800">
+                            {topPct.toFixed(1)}% de tu huella total
+                          </span>
+                          . Priorizar mejoras en esta categoría tiene el
+                          mayor impacto.
+                        </p>
+                        <div className="space-y-2">
+                          {(acciones[topCat] || []).map((a, idx) => (
+                            <div
+                              key={idx}
+                              className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5"
+                            >
+                              <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
+                                {a.icon}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-emerald-900">
+                                  {a.titulo}
+                                </p>
+                                <p className="text-xs text-emerald-700">
+                                  {a.texto}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Columna derecha: KPI + equivalencias + acciones principales */}
+                <div className="order-1 lg:order-2 space-y-4">
+                  {/* Tarjeta principal */}
+                  <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-5 text-white shadow-md">
+                    <div className="absolute right-[-50px] top-[-50px] h-40 w-40 rounded-full bg-emerald-400/20 blur-2xl" />
+                    <div className="relative">
+                      <p className="text-xs uppercase tracking-wide text-emerald-100">
+                        Huella estimada de tu visita
+                      </p>
+                      <p className="mt-1 text-3xl font-extrabold">
+                        {totalKg.toFixed(2)} kg CO₂e
+                      </p>
+                      <p className="mt-2 text-xs text-emerald-50 leading-relaxed">
+                        Esto es similar a recorrer{" "}
+                        <span className="font-semibold">
+                          {kmAutoEquivalentes.toFixed(0)} km
+                        </span>{" "}
+                        en un auto a gasolina, o requerir aproximadamente{" "}
+                        <span className="font-semibold">
+                          {arbolesEquivalentes.toFixed(1)} árboles
+                        </span>{" "}
+                        absorbiendo CO₂ durante un año para compensarlo.
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-900/40 px-3 py-1">
+                          <Map className="w-3 h-3" />
+                          Origen: {st.id.origen}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-900/40 px-3 py-1">
+                          <MountainSnow className="w-3 h-3" />
+                          Destino: {st.id.destino}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-900/40 px-3 py-1">
+                          <Car className="w-3 h-3" />
+                          Distancia ida ref: {Math.round(baseKm)} km
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acciones principales */}
+                  <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-2">
+                    <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
+                      Acciones principales según mayor contribución
+                    </p>
+                    <p className="text-sm text-emerald-800">
+                      Categoría prioritaria:{" "}
+                      <span className="font-semibold">{topCat}</span> (
+                      {topPct.toFixed(1)}% de tu huella).
+                    </p>
+                    <p className="text-xs text-emerald-800/90">
+                      Si mejoras esta categoría, lograrás el mayor impacto en
+                      la reducción de CO₂. Te sugerimos comenzar por estas
+                      acciones:
+                    </p>
+
+                    <ul className="mt-2 space-y-2">
+                      {(acciones[topCat] || []).map((a, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 rounded-xl bg-white/80 px-3 py-2 border border-emerald-100"
+                        >
+                          <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                            {a.icon}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium text-emerald-900">
+                              {a.titulo}
+                            </p>
+                            <p className="text-xs text-emerald-700">
+                              {a.texto}
+                            </p>
+                          </div>
                         </li>
                       ))}
                     </ul>
-                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 mt-4">
-                      <p className="font-medium">Acciones principales según mayor contribución: <span className="capitalize">{topCat}</span></p>
-                      <ul className="mt-2 space-y-2">
-                        {(acciones[topCat]||[]).map((a,idx)=>(
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="mt-0.5">{a.icon}</span>
-                            <div><p className="font-medium">{a.titulo}</p><p className="text-slate-600 text-xs">{a.texto}</p></div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
                   </div>
-                  <div className="flex gap-2 mt-4">
-                    <button onClick={exportar} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50">
-                      <Download className="w-4 h-4" /> Exportar JSON
+
+                  {/* Botones */}
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button
+                      onClick={exportar}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      <Download className="w-4 h-4" />
+                      Exportar JSON
                     </button>
-                    <button type="button" onClick={exportarPDF} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border">📄 Exportar PDF
+                    <button
+                      type="button"
+                      onClick={exportarPDF}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                    >
+                      📄 Exportar PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSt(ESTADO_INICIAL);
+                        setPaso(0);
+                        trackEvent("calculator_reset", {
+                          category: "Calculadora",
+                        });
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                    >
+                      🔄 Nuevo viaje
                     </button>
                   </div>
                 </div>
-                <div style={{ transform: 'scale(0.92)', transformOrigin: 'center' }}>
-             <ResponsiveContainer width="100%" height={300}>
-  <PieChart margin={{ top: 10, right: 136, bottom: 10, left: 20 }}>
-    <defs>
-      <filter id="softShadow2" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.12" />
-      </filter>
-    </defs>
-
-    <Pie
-      data={donutData}
-      dataKey="kg"
-      nameKey="name"
-      cx="67%"
-      cy="46%"
-      innerRadius={72}
-      outerRadius={104}
-      paddingAngle={2}
-      cornerRadius={10}
-      labelLine={true} 
-      label={outerLabel}
-      stroke="#ffffff"
-      strokeWidth={2}
-      isAnimationActive
-      animationDuration={600}
-      filter="url(#softShadow2)"
-    >
-      {donutData.map((entry, i) => (
-        <Cell key={`cell-${i}`} fill={entry.color} />
-      ))}
-
-      <Label
-        content={(props) => <CenterText {...props} totalKg={totalKg} />}
-        position="center"
-      />
-    </Pie>
-
-    <Tooltip
-      formatter={(v: number, n: string) => {
-        const pct = totalKg > 0 ? ((v / totalKg) * 100).toFixed(1) : "0.0";
-        return [`${v.toFixed(2)} kg (${pct}%)`, n];
-      }}
-    />
-  </PieChart>
-</ResponsiveContainer>
-</div>
-
               </div>
             </CardContent>
           </Card>
         )}
 
+        {/* Navegación de pasos */}
         <div className="flex items-center justify-between my-6">
-          <button onClick={handleSiguientePaso} disabled={paso===0} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"><ChevronLeft className="w-4 h-4" /> Atrás</button>
-          <div className="text-sm text-slate-500">Paso {paso+1} de {PASOS.length}</div>
-          <button onClick={()=>setPaso(p=>Math.min(PASOS.length-1,p+1))} disabled={paso===PASOS.length-1} className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50">Siguiente <ChevronRight className="w-4 h-4" /></button>
+          <button
+            onClick={() => {
+              trackEvent("step_back", {
+                category: "Calculadora",
+                paso_actual: paso + 1,
+              });
+              setPaso((p) => Math.max(0, p - 1));
+            }}
+            disabled={paso === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Atrás
+          </button>
+          <div className="text-sm text-slate-500">
+            Paso {paso + 1} de {PASOS.length}
+          </div>
+          <button
+            onClick={handleSiguientePaso}
+            disabled={paso === PASOS.length - 1}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
+          >
+            Siguiente
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       <footer className="mt-12 border-t">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="text-slate-400">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
+            <p className="text-slate-400">
+              Corredor Biológico Nevados de Chillán – Laguna del Laja
+            </p>
             <p className="text-slate-400">(Ñuble/Biobío).</p>
           </div>
           <div>
-            <p className="font-medium text-slate-600">Universidad de Concepción</p>
-            <p className="text-slate-500 mt-1">Departamento de Ingeniería Industrial</p>
+            <p className="font-medium text-slate-600">
+              Universidad de Concepción
+            </p>
+            <p className="text-slate-500 mt-1">
+              Departamento de Ingeniería Industrial
+            </p>
           </div>
           <div>
-            <p className="font-medium text-slate-600">Calculadora de huella de carbono</p>
-            <p className="text-slate-500 mt-1">Mide y contribuye con tu visita</p>
+            <p className="font-medium text-slate-600">
+              Calculadora de huella de carbono
+            </p>
+            <p className="text-slate-500 mt-1">
+              Mide y contribuye con tu visita
+            </p>
           </div>
         </div>
       </footer>
