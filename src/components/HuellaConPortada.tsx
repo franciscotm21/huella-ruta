@@ -189,9 +189,10 @@ const ESTADO_INICIAL = {
   id: { origen:"Chillán", destino:"Pinto- Nevados de Chillán", km_personalizado:0 },
   transporte: { medio:"Auto gasolina", pasajeros_auto:2, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_total:20 },
   alojamiento: { tipo:"Cabaña", noches:2, calefaccion:"Leña", personas_total:2 },
-  alimentacion: { donde:"Restaurantes locales", productos_locales:true, dias:2 },
+  alimentacion: { donde: "Restaurantes locales", productos_locales: true, tipo_dieta: "Mixta (algo de carne roja y algo sin carne)",},
   actividades: { seleccion:[] as string[], horas: {} as Record<string, number> },
-  residuosagua: { manejo:"Separé y reciclé", agua:"Promedio (no sé)", dias:2 },
+  residuosagua: {manejo: "Separé y reciclé",agua: "Promedio (no sé)",botellas: "Usé en su mayoría botella reutilizable",},
+
 };
 
 
@@ -289,6 +290,8 @@ function Calculadora(){
   const { desglose, totalKg, totalTons, topCat, baseKm } = useMemo(()=>{
     const baseKm = st.id.km_personalizado>0 ? st.id.km_personalizado : DIST_IDA_KM[st.id.origen]?.[st.id.destino]  ?? (CITY_PRESET_KM_ONEWAY[st.id.origen] ?? 0);
     const kmTotal = baseKm*2;
+    // Día de visita aproximado: al menos 1 día, y usamos las noches de alojamiento
+    const diasVisita = Math.max(1, st.alojamiento.noches || 1);
 
     let llegarKg = 0;
     switch(st.transporte.medio){
@@ -330,32 +333,60 @@ function Calculadora(){
     if (st.alojamiento.calefaccion==="Electricidad") cal=F_ALOJA.cal.elec;
     const alojamientoKg = ((alojBase+cal)*noches)/share;
 
-    const dias = st.alimentacion.dias;
-    let alim = F_ALIM.locales;
-    if (st.alimentacion.donde==="Cadenas externas") alim=F_ALIM.cadenas;
-    if (st.alimentacion.donde==="Autoabastecido") alim=F_ALIM.auto;
-    alim *= dias;
-    if (st.alimentacion.productos_locales) alim += F_ALIM.bonus_local*dias;
-    if (alim<0) alim=0;
+    // Usamos las noches de alojamiento para aproximar los días de alimentación
+const diasAlim = diasVisita;
+
+let alim = F_ALIM.locales;
+if (st.alimentacion.donde === "Cadenas externas") alim = F_ALIM.cadenas;
+if (st.alimentacion.donde === "Autoabastecido") alim = F_ALIM.auto;
+
+// Factor según cantidad de carne roja
+let factorDieta = 1;
+if (st.alimentacion.tipo_dieta === "Alta en carne roja (vacuno casi todos los días)") {
+  factorDieta = 1.4;   // más huella
+}
+if (st.alimentacion.tipo_dieta === "Mayormente sin carne roja / vegetariana") {
+  factorDieta = 0.7;   // menos huella
+}
+// "Mixta" queda con factor 1
+
+let alimTotal = alim * diasAlim * factorDieta;
+
+if (st.alimentacion.productos_locales) {
+  alimTotal += F_ALIM.bonus_local * diasAlim * factorDieta;
+}
+if (alimTotal < 0) alimTotal = 0;
 
     const H = st.actividades.horas as Record<string,number>;
     const act = (H["Ski/Snowboard"]||0)*F_ACT.ski + (H["Trekking"]||0)*F_ACT.trekking + (H["Cabalgata"]||0)*F_ACT.cabalgata + (H["MTB"]||0)*F_ACT.mtb + (H["Raquetas"]||0)*F_ACT.raquetas + (H["Canopy"]||0)*F_ACT.canopy + (H["Moto de nieve"]||0)*F_ACT.moto + (H["Otro"]||0)*F_ACT.otro;
 
     let res = F_RES.manejo.sep;
-    if (st.residuosagua.manejo==="Basureros comunes") res=F_RES.manejo.comunes;
-    if (st.residuosagua.manejo==="Me los llevé de regreso") res=F_RES.manejo.regreso;
-    if (st.residuosagua.manejo==="Otro") res=F_RES.manejo.otro;
+if (st.residuosagua.manejo === "Basureros comunes") res = F_RES.manejo.comunes;
+if (st.residuosagua.manejo === "Me los llevé de regreso") res = F_RES.manejo.regreso;
+if (st.residuosagua.manejo === "Otro") res = F_RES.manejo.otro;
 
-    let agua = F_RES.agua.prom;
-    if (st.residuosagua.agua==="Bajo") agua = F_RES.agua.bajo;
-    if (st.residuosagua.agua==="Alto") agua = F_RES.agua.alto;
-    const resAgua = (res+agua)*st.residuosagua.dias;
+let agua = F_RES.agua.prom;
+if (st.residuosagua.agua === "Bajo") agua = F_RES.agua.bajo;
+if (st.residuosagua.agua === "Alto") agua = F_RES.agua.alto;
+
+// Factor según uso de botellas/embalajes
+let factorBotellas = 1;
+if (st.residuosagua.botellas === "Muchas botellas plásticas desechables") {
+  factorBotellas = 1.3;
+}
+if (st.residuosagua.botellas === "Usé en su mayoría botella reutilizable") {
+  factorBotellas = 0.8;
+}
+// la opción intermedia queda en 1
+
+const resAgua = (res + agua) * diasVisita * factorBotellas;
+
 
     const desglose = [
       { name:"Transporte ida/regreso", kg:llegarKg },
       { name:"Transporte local", kg:localKg },
       { name:"Alojamiento", kg:alojamientoKg },
-      { name:"Alimentación", kg:alim },
+      { name:"Alimentación", kg:alimTotal },
       { name:"Actividades", kg:act },
       { name:"Residuos/Agua", kg:resAgua },
     ];
@@ -364,9 +395,18 @@ function Calculadora(){
     return { desglose, totalKg, totalTons: totalKg/1000, topCat: top.name, baseKm };
   },[st]);
 
-   // === Equivalencias simples a partir del total ===
-  const kmAutoEquivalentes = totalKg / 0.18;
-  const arbolesEquivalentes = totalKg / 100; 
+  // === Equivalencias simples a partir del total ===
+// Supongamos que un árbol nativo captura ~20 kg CO₂ por año
+const kgPorArbolPorAnio = 20;
+
+const aniosArbolEquivalentes =
+  totalKg > 0 ? totalKg / kgPorArbolPorAnio : 0;
+
+// Árboles necesarios redondeados a ENTERO (mínimo 1)
+const arbolesEquivalentes =
+  totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPorArbolPorAnio)) : 0;
+
+
 
    // % que representa la categoría de mayor contribución
   const topEntry = desglose.find((d) => d.name === topCat);
@@ -399,6 +439,7 @@ function Calculadora(){
     "Alimentación": [
       { icon:<BadgeCheck className="w-4 h-4"/>, titulo:"Compra local", texto:"Más impacto en la comunidad, menos transporte."},
       { icon:<Recycle className="w-4 h-4"/>, titulo:"Menos envases", texto:"Usa contenedores reutilizables."},
+      {icon: <Flame className="w-4 h-4" />,titulo: "Reduce carnes rojas (vacuno)",texto:"Durante un tiempo, prioriza pollo, pescado, legumbres y opciones vegetale."},
     ],
     "Actividades": [
       { icon:<Trees className="w-4 h-4"/>, titulo:"Más trekking/MTB", texto:"Prioriza actividades de bajo impacto."},
@@ -409,6 +450,23 @@ function Calculadora(){
       { icon:<Droplets className="w-4 h-4"/>, titulo:"Ahorro de agua", texto:"Duchas cortas y uso racional."},
     ]
   };
+
+  // Perfil estimado según totalKg CO2 en Resultados
+
+const perfilLabel =
+  totalKg < 30
+    ? "Visita de bajo impacto"
+    : totalKg < 80
+    ? "Impacto medio"
+    : "Impacto alto";
+
+const perfilDotColor =
+  totalKg < 30
+    ? "bg-emerald-300" // verde
+    : totalKg < 80
+    ? "bg-amber-300"   // amarillo
+    : "bg-red-400";    // rojo
+
  const renderLabel = (props: any) => {
     const { cx, cy, midAngle, outerRadius, percent, name } = props;
     const RAD = Math.PI / 180;
@@ -573,147 +631,191 @@ const exportarPDF = async () => {
 
 
   // =====================================================
-  // ACCIONES RECOMENDADAS (VERSIÓN MEJORADA)
-  // =====================================================
-  let yAcc = 0;
+// ACCIONES RECOMENDADAS – tarjetas compactas y texto centrado
+// =====================================================
+let yAcc = 0;
 
-  if (docAny.lastAutoTable && docAny.lastAutoTable.finalY) {
-    yAcc = docAny.lastAutoTable.finalY + 30;
-  } else {
-    yAcc = 240 + 30;
-  }
+if (docAny.lastAutoTable && docAny.lastAutoTable.finalY) {
+  yAcc = docAny.lastAutoTable.finalY + 30;
+} else {
+  yAcc = 270;
+}
 
-  // Título de la sección
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
-  doc.text(`Acciones recomendadas (mayor contribución: ${topCat})`, 30, yAcc);
+// Título de la sección
+doc.setFont("helvetica", "bold");
+doc.setFontSize(14);
+doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+doc.text(
+  `Acciones recomendadas (mayor contribución: ${topCat})`,
+  30,
+  yAcc
+);
 
-  yAcc += 18;
+yAcc += 18;
 
-  const lista = acciones[topCat] || [];
+const lista = acciones[topCat] || [];
 
-  if (!lista.length) {
+if (!lista.length) {
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
+  doc.text(
+    "Revisa en la calculadora consejos personalizados para reducir tu huella en esta categoría.",
+    30,
+    yAcc
+  );
+} else {
+  const cardMarginX = 30;
+  const cardWidth = W - 60;
+
+  lista.forEach((a, idx) => {
+    // Altura mínima para cada tarjeta
+    const titulo = a.titulo || `Acción ${idx + 1}`;
+    const texto = a.texto || "";
+
+    // Texto envuelto dentro de la tarjeta
+    const wrapped = doc.splitTextToSize(texto, cardWidth - 80);
+
+    // 🔹 Tarjeta más baja que antes
+    const cardHeight = 40 + wrapped.length * 12;
+
+    // Si no cabe en la página, saltar a la siguiente
+    if (yAcc + cardHeight > H - 80) {
+      doc.addPage();
+      yAcc = 60;
+    }
+
+    // Fondo de tarjeta
+    doc.setFillColor(
+      COLOR.emeraldLight.r,
+      COLOR.emeraldLight.g,
+      COLOR.emeraldLight.b
+    );
+    doc.roundedRect(cardMarginX, yAcc, cardWidth, cardHeight, 10, 10, "F");
+
+    // Círculo con número
+    const iconCenterX = cardMarginX + 24;
+    const iconCenterY = yAcc + cardHeight / 2;
+
+    doc.setFillColor(COLOR.emerald.r, COLOR.emerald.g, COLOR.emerald.b);
+    doc.circle(iconCenterX, iconCenterY, 11, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
+    doc.text(String(idx + 1), iconCenterX - 3, iconCenterY + 3);
+
+    // 🔹 Centrado vertical del contenido (título + descripción)
+    const contentHeight = 14 + wrapped.length * 12; // 1 línea de título + descripción
+    const startY = yAcc + (cardHeight - contentHeight) / 2;
+
+    const textX = cardMarginX + 50;
+
+    // Título
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+    doc.text(titulo, textX, startY + 10);
+
+    // Descripción
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
-    doc.text(
-      "Revisa en la calculadora consejos personalizados para reducir tu huella en esta categoría.",
-      30,
-      yAcc
-    );
-  } else {
-    const cardMarginX = 30;
-    const cardWidth = W - 60;
+    doc.text(wrapped, textX, startY + 26);
 
-    lista.forEach((a, idx) => {
-      // Si se acerca al final de la página, saltar a nueva
-      const espacioMinimo = 120; // espacio mínimo para una tarjeta
-      if (yAcc + espacioMinimo > H - 60) {
-        doc.addPage();
-        yAcc = 60;
+    // Siguiente tarjeta
+    yAcc += cardHeight + 10;
+  });
+}
+
+    // =====================================================
+  // BLOQUE COMPACTO: RECUERDA PARA TU PRÓXIMA VISITA
+  // =====================================================
+  let yRec = yAcc + 22; // más cerca de las acciones
+
+  // Altura estimada del bloque
+  const recHeight = 140;
+
+  // Si no alcanza, lo subimos un poco para que quepa en esta página
+  if (yRec + recHeight > H - 60) {
+    yRec = H - 60 - recHeight;
+  }
+
+  // Título (más pequeño)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+  doc.text("Recuerda para tu próxima visita:", 30, yRec);
+
+  // Parámetros de los círculos (más pequeños y compactos)
+  const centerY = yRec + 70;
+const radius = 44;                // un pelín más chico para dar aire
+const diameter = radius * 2;
+const imgSize = diameter - 10;
+const gapX = 170;                 // MÁS separación entre columnas
+const firstCenterX = W / 2 - gapX;
+
+
+  const recordatorios = [
+    {
+      cx: firstCenterX,
+      imgPath: "/pdf-arbol.png",        // asegúrate de que exista en /public
+      label: "Planta un árbol nativo",
+    },
+    {
+      cx: firstCenterX + gapX,
+      imgPath: "/pdf-consumo.png",
+      label: "Consume de forma responsable",
+    },
+    {
+      cx: firstCenterX + gapX * 2,
+      imgPath: "/pdf-transporte.png",
+      label: "Elige transportes limpios",
+    },
+  ];
+
+   for (const item of recordatorios) {
+    const { cx, imgPath, label } = item;
+    const cy = centerY;
+
+    // Imagen centrada
+    try {
+      const dataUrl = await fileToDataURL(imgPath);
+      if (dataUrl) {
+        const imgX = cx - imgSize / 2;
+        const imgY = cy - imgSize / 2;
+        doc.addImage(dataUrl, "PNG", imgX, imgY, imgSize, imgSize);
       }
+    } catch {}
 
-      // Texto principal de la acción
-      const titulo = a.titulo || `Acción ${idx + 1}`;
-      const texto = a.texto || "";
-      const impacto = (a as any).impacto as string | undefined; // opcional: "Reduce hasta un 20% tu huella"
-      const link = (a as any).link as string | undefined;       // opcional: URL con más info
+    // Círculo
+    doc.setLineWidth(1.6);
+    doc.setDrawColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
+    doc.circle(cx, cy, radius, "S");
 
-      // Calcula alto de la tarjeta según contenido
-      const contenidoYBase = yAcc + 32; // donde empieza el texto descriptivo
-      const wrapped = doc.splitTextToSize(
-        texto,
-        cardWidth - 60 // margen interior de la tarjeta
-      );
-      let cardHeight = 50 + wrapped.length * 12; // base estimada
+    // 🔽 Texto un poco más separado
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
 
-      if (impacto) cardHeight += 14;
-      if (link) cardHeight += 16;
-
-      // Fondo de tarjeta
-      doc.setFillColor(COLOR.emeraldLight.r, COLOR.emeraldLight.g, COLOR.emeraldLight.b);
-      doc.roundedRect(cardMarginX, yAcc, cardWidth, cardHeight, 10, 10, "F");
-
-      // Número dentro de círculo (marcador dinámico)
-      const iconCenterX = cardMarginX + 20;
-      const iconCenterY = yAcc + 20;
-      doc.setFillColor(COLOR.emerald.r, COLOR.emerald.g, COLOR.emerald.b);
-      doc.circle(iconCenterX, iconCenterY, 10, "F");
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
-      // número centrado aprox.
-      doc.text(String(idx + 1), iconCenterX - 3, iconCenterY + 3);
-
-      // Título de la acción
-      doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
-      doc.setFontSize(12);
-      doc.text(titulo, cardMarginX + 40, yAcc + 18);
-
-      let textoY = contenidoYBase;
-
-      // Impacto (si existe)
-      if (impacto) {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.setTextColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
-        doc.text(`Impacto estimado: ${impacto}`, cardMarginX + 40, yAcc + 34);
-        textoY = yAcc + 50;
-      }
-
-      // Descripción
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.setTextColor(COLOR.slate.r, COLOR.slate.g, COLOR.slate.b);
-      doc.text(wrapped, cardMarginX + 40, textoY);
-
-      let afterTextoY = textoY + wrapped.length * 12;
-
-      // Link “interactivo” (clicable en el PDF) si existe
-      if (link) {
-        const linkLabel = "Ver guía o recurso en línea";
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.setTextColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
-
-        // texto subrayado como link
-        const linkX = cardMarginX + 40;
-        const linkY = afterTextoY + 10;
-        doc.text(linkLabel, linkX, linkY);
-        const linkWidth = doc.getTextWidth(linkLabel);
-        doc.setDrawColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
-        doc.setLineWidth(0.5);
-        doc.line(linkX, linkY + 1, linkX + linkWidth, linkY + 1);
-
-        // hace el texto clicable
-        try {
-          docAny.textWithLink(linkLabel, linkX, linkY, { url: link });
-        } catch {
-          // si textWithLink no existe, el PDF al menos muestra la URL como texto
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(COLOR.slateLight.r, COLOR.slateLight.g, COLOR.slateLight.b);
-          doc.text(link, linkX, linkY + 12);
-        }
-
-        afterTextoY = linkY + 16;
-      }
-
-      // Avanzar para la siguiente tarjeta
-      yAcc = Math.max(yAcc + cardHeight + 12, afterTextoY + 12);
-    });
+    const textY = cy + radius + 26;   // antes: + 18
+    doc.text(label, cx, textY, { align: "center" } as any);
   }
 
 
-  // === FOOTER ===
+
+  // =====================================================
+  // FOOTER
+  // =====================================================
+  
   doc.setFontSize(9);
   doc.setTextColor(COLOR.slateLight.r, COLOR.slateLight.g, COLOR.slateLight.b);
-  doc.text(`Generado el ${new Date().toLocaleString()}`, 30, H - 30);
+  doc.text(`Generado el ${new Date().toLocaleString()}`, 30, H - 25);
 
   doc.save("reporte-huella-premium.pdf");
 };
+
+  
 
 // Colores fijos por categoría (elige los que prefieras)
 const COLOR_BY_CAT: Record<string, string> = {
@@ -877,7 +979,7 @@ function CenterText({ viewBox, totalKg }: any) {
           destino: st.id.destino,
           km_ida: Math.round(baseKm),
           noches: st.alojamiento.noches,
-          dias_estadia: st.residuosagua.dias,
+          dias_estadia: Math.max(1, st.alojamiento.noches || 1),
         });
 
         // Evento: cálculo exitoso con el resultado numérico
@@ -1049,28 +1151,59 @@ function CenterText({ viewBox, totalKg }: any) {
         )}
 
         {paso===3 && (
-          <Card>
-            <CardHeader title="Alimentación" icon={<Flame/>} subtitle="Dónde consumiste y si eliges productos locales." />
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm">¿Dónde consumiste la mayoría?</label>
-                  <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.alimentacion.donde} onChange={e=>set("alimentacion.donde", e.target.value)}>
-                    {["Restaurantes locales","Cadenas externas","Autoabastecido"].map(x=>(<option key={x} value={x}>{x}</option>))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 mt-7">
-                  <input type="checkbox" checked={st.alimentacion.productos_locales} onChange={e=>set("alimentacion.productos_locales", e.target.checked)} />
-                  <span className="text-sm">¿Principalmente productos locales?</span>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm">Días de estadía</label>
-                  <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.alimentacion.dias} onChange={e=>set("alimentacion.dias", Number(e.target.value||0))} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+  <Card>
+    <CardHeader title="Alimentación" icon={<Flame/>} subtitle="Dónde consumiste y si eliges productos locales." />
+    <CardContent>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm">¿Dónde consumiste la mayoría?</label>
+          <select
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={st.alimentacion.donde}
+            onChange={e => set("alimentacion.donde", e.target.value)}
+          >
+            {["Restaurantes locales","Cadenas externas","Autoabastecido"].map(x => (
+              <option key={x} value={x}>{x}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2 mt-7">
+          <input
+            type="checkbox"
+            checked={st.alimentacion.productos_locales}
+            onChange={e => set("alimentacion.productos_locales", e.target.checked)}
+          />
+          <span className="text-sm">¿Principalmente productos locales?</span>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="text-sm">Tipo de alimentación durante el viaje</label>
+          <select
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={st.alimentacion.tipo_dieta}
+            onChange={e => set("alimentacion.tipo_dieta", e.target.value)}
+          >
+            <option value="Alta en carne roja (vacuno casi todos los días)">
+              Alta en carne roja (vacuno casi todos los días)
+            </option>
+            <option value="Mixta (algo de carne roja y algo sin carne)">
+              Mixta (algo de carne roja y algo sin carne)
+            </option>
+            <option value="Mayormente sin carne roja / vegetariana">
+              Mayormente sin carne roja / vegetariana
+            </option>
+          </select>
+          <p className="text-xs text-slate-500 mt-1">
+            La carne roja (vacuno) tiene una huella de carbono mucho mayor que otras opciones.
+            Esto nos ayuda a estimar mejor el impacto de tu alimentación durante la visita.
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
 
         {paso===4 && (
           <Card>
@@ -1118,13 +1251,35 @@ function CenterText({ viewBox, totalKg }: any) {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-sm">Días de visita</label>
-                  <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.residuosagua.dias} onChange={e=>set("residuosagua.dias", Number(e.target.value||0))} />
-                </div>
+  <label className="text-sm">
+    Uso de botellas y envases de bebidas durante la visita
+  </label>
+  <select
+    className="mt-1 w-full border rounded-md px-3 py-2"
+    value={st.residuosagua.botellas}
+    onChange={e => set("residuosagua.botellas", e.target.value)}
+  >
+    <option value="Muchas botellas plásticas desechables">
+      Muchas botellas plásticas desechables
+    </option>
+    <option value="Algo de botellas desechables, algo reutilizable">
+      Mezcla de desechables y reutilizable
+    </option>
+    <option value="Usé en su mayoría botella reutilizable">
+      Usé en su mayoría botella reutilizable / termo
+    </option>
+  </select>
+  <p className="text-xs text-slate-500 mt-1">
+    Consideramos que las botellas plásticas y envases de un solo uso aportan a la huella
+    de residuos de tu viaje. Usar botellas reutilizables reduce significativamente este impacto.
+  </p>
+</div>
+
               </div>
             </CardContent>
           </Card>
         )}
+
    {/* 🔽 Paso 6: resultado moderno */}
         {paso === 6 && (
           <Card>
@@ -1288,17 +1443,9 @@ function CenterText({ viewBox, totalKg }: any) {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <p className="text-xs text-slate-500">
-                          En tu viaje,{" "}
-                          <span className="font-semibold text-slate-800">
-                            {topCat}
-                          </span>{" "}
-                          concentra aproximadamente{" "}
-                          <span className="font-semibold text-slate-800">
-                            {topPct.toFixed(1)}% de tu huella total
-                          </span>
-                          . Priorizar mejoras en esta categoría tiene el
-                          mayor impacto.
+                        <p className="text-xs text-slate-500">En tu viaje,{" "}<span className="font-semibold text-slate-800">  {topCat}</span>{" "} concentra aproximadamente{" "}
+                          <span className="font-semibold text-slate-800">{topPct.toFixed(1)}% de tu huella total
+                          </span>. Priorizar mejoras en esta categoría tiene el mayor impacto.
                         </p>
                         <div className="space-y-2">
                           {(acciones[topCat] || []).map((a, idx) => (
@@ -1334,20 +1481,23 @@ function CenterText({ viewBox, totalKg }: any) {
                       <p className="text-xs uppercase tracking-wide text-emerald-100">
                         Huella estimada de tu visita
                       </p>
-                      <p className="mt-1 text-3xl font-extrabold">
+                      <p className="mt-1 text-4xl font-extrabold text-center">
                         {totalKg.toFixed(2)} kg CO₂e
                       </p>
-                      <p className="mt-2 text-xs text-emerald-50 leading-relaxed">
-                        Esto es similar a recorrer{" "}
-                        <span className="font-semibold">
-                          {kmAutoEquivalentes.toFixed(0)} km
-                        </span>{" "}
-                        en un auto a gasolina, o requerir aproximadamente{" "}
-                        <span className="font-semibold">
-                          {arbolesEquivalentes.toFixed(1)} árboles
-                        </span>{" "}
-                        absorbiendo CO₂ durante un año para compensarlo.
-                      </p>
+                      {/* PERFIL ESTIMADO CENTRADO */}
+                      <div className="mt-4 flex justify-center">
+                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-700/40 px-4 py-1.5 text-xs sm:text-sm text-emerald-50">
+                        <span className={`h-2.5 w-2.5 rounded-full ${perfilDotColor}`} />
+                        <span className="font-medium">Perfil estimado:</span>
+                        <span className="font-semibold">{totalKg < 30  ? "Visita de bajo impacto"  : totalKg < 80 ? "Impacto medio": "Impacto alto"}</span>
+                         </div>
+                         </div>
+                         <p className="mt-6 text-sm sm:text-base text-emerald-50 text-justify leading-relaxed">Tu visita genera una huella equivalente al CO₂ que{" "}
+                          <span className="font-semibold">un árbol nativo</span> absorbe en alrededor de{" "}
+                          <span className="font-semibold">{aniosArbolEquivalentes.toFixed(1)} años</span>. Para compensarla en{" "}
+                          <span className="font-semibold">un solo año</span>, se necesitarían cerca de{" "}
+                          <span className="font-semibold">{arbolesEquivalentes} árboles nativos</span>.
+                          </p>
 
                       <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-900/40 px-3 py-1">
@@ -1406,6 +1556,8 @@ function CenterText({ viewBox, totalKg }: any) {
 
                   {/* Botones */}
                   <div className="flex flex-wrap gap-2 pt-1">
+                     {/* Botón JSON oculto / eliminado
+
                     <button
                       onClick={exportar}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
@@ -1413,12 +1565,14 @@ function CenterText({ viewBox, totalKg }: any) {
                       <Download className="w-4 h-4" />
                       Exportar JSON
                     </button>
+
+                     */}
                     <button
                       type="button"
                       onClick={exportarPDF}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
                     >
-                      📄 Exportar PDF
+                      📄 Guarda tu registro
                     </button>
                     <button
                       type="button"
