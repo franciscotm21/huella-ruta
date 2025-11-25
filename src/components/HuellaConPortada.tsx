@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Label } from "recharts";
-import { motion, AnimatePresence } from "framer-motion";
+import {motion,AnimatePresence,useMotionValue,useTransform,animate,} from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -411,6 +411,49 @@ const arbolesEquivalentes =
    // % que representa la categoría de mayor contribución
   const topEntry = desglose.find((d) => d.name === topCat);
   const topPct = topEntry && totalKg > 0 ? (topEntry.kg / totalKg) * 100 : 0;
+
+  function AnimatedTotalKg({ value }: { value: number }) {
+  const motionValue = useMotionValue(0);
+  const rounded = useTransform(motionValue, (latest) =>
+    latest.toFixed(2)
+  );
+
+  React.useEffect(() => {
+    const controls = animate(motionValue, value, {
+      duration: 1.3,
+      ease: "easeOut",
+    });
+    return () => controls.stop();
+  }, [value, motionValue]);
+
+  return (
+    <div className="relative inline-flex flex-col items-center">
+      {/* Anillo pulsante */}
+      <motion.div
+        className="absolute h-20 w-20 rounded-full border border-emerald-200/60"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: [0, 1, 0], scale: [0.6, 1.15, 1.4] }}
+        transition={{
+          duration: 2.2,
+          repeat: Infinity,
+          repeatType: "loop",
+        }}
+      />
+
+      {/* Número animado */}
+      <div className="relative flex items-baseline gap-1">
+        <motion.span
+          style={{ fontVariantNumeric: "tabular-nums" }}
+          className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+        >
+          {rounded}
+        </motion.span>
+        <span className="text-xl sm:text-2xl font-extrabold">kg CO₂e</span>
+      </div>
+    </div>
+  );
+}
+
   
   const colores = ["#10b981","#0ea5e9","#f59e0b","#ef4444","#6366f1","#14b8a6"];
 
@@ -1481,9 +1524,10 @@ function CenterText({ viewBox, totalKg }: any) {
                       <p className="text-xs uppercase tracking-wide text-emerald-100">
                         Huella estimada de tu visita
                       </p>
-                      <p className="mt-1 text-4xl font-extrabold text-center">
-                        {totalKg.toFixed(2)} kg CO₂e
-                      </p>
+                      <div className="mt-2 flex justify-center">
+  <AnimatedTotalKg value={totalKg} />
+</div>
+
                       {/* PERFIL ESTIMADO CENTRADO */}
                       <div className="mt-4 flex justify-center">
                         <div className="inline-flex items-center gap-2 rounded-full bg-emerald-700/40 px-4 py-1.5 text-xs sm:text-sm text-emerald-50">
