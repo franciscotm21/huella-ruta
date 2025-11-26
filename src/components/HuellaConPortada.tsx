@@ -1073,7 +1073,7 @@ function CenterText({ viewBox, totalKg }: any) {
   <img
     src="/logo2.png"
     alt="Logo aliado"
-    className="h-16 w-auto lg:h-20"
+    className="hidden h-16 w-auto md:block lg:h-24"
   />
 </div>
 
