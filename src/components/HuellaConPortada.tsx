@@ -187,8 +187,8 @@ const F_RES = { manejo:{sep:0.2, comunes:0.6, regreso:0.1, otro:0.5}, agua:{prom
 
 const ESTADO_INICIAL = {
   id: { origen:"Chillán", destino:"Pinto- Nevados de Chillán", km_personalizado:0 },
-  transporte: { medio:"Auto gasolina", pasajeros_auto:2, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_total:20 },
-  alojamiento: { tipo:"Cabaña", noches:2, calefaccion:"Leña", personas_total:2 },
+  transporte: { medio:"Auto gasolina", pasajeros_auto:1, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_total:20 },
+  alojamiento: { tipo:"Cabaña", noches:1, calefaccion:"Leña", personas_total:1 },
   alimentacion: { donde: "Restaurantes locales", productos_locales: true, tipo_dieta: "Mixta (algo de carne roja y algo sin carne)",},
   actividades: { seleccion:[] as string[], horas: {} as Record<string, number> },
   residuosagua: {manejo: "Separé y reciclé",agua: "Promedio (no sé)",botellas: "Usé en su mayoría botella reutilizable",},
@@ -298,15 +298,9 @@ function Calculadora(){
       case "Auto gasolina": llegarKg = (kmTotal*F_TRANSP.auto_gasolina)/Math.max(1, st.transporte.pasajeros_auto); break;
       case "Auto diésel": llegarKg = (kmTotal*F_TRANSP.auto_diesel)/Math.max(1, st.transporte.pasajeros_auto); break;
       case "Auto híbrido": llegarKg = (kmTotal*F_TRANSP.auto_hibrido)/Math.max(1, st.transporte.pasajeros_auto); break;
-      case "Auto eléctrico": {
-        const kwh = (kmTotal * st.transporte.consumo_e_kwh_100)/100;
-        llegarKg = (kwh*F_TRANSP.grid)/Math.max(1, st.transporte.pasajeros_auto); break;
-      }
+      case "Auto eléctrico": {const kwh = (kmTotal * st.transporte.consumo_e_kwh_100)/100; llegarKg = (kwh*F_TRANSP.grid)/Math.max(1, st.transporte.pasajeros_auto); break;}
       case "Bus interurbano": llegarKg = kmTotal*F_TRANSP.bus; break;
-      case "Avión + transporte terrestre": {
-        const km_avion = kmTotal*0.8, km_bus=kmTotal*0.2;
-        llegarKg = km_avion*F_TRANSP.avion + km_bus*F_TRANSP.bus; break;
-      }
+      case "Avión + transporte terrestre": {const km_avion = kmTotal*0.8, km_bus=kmTotal*0.2;llegarKg = km_avion*F_TRANSP.avion + km_bus*F_TRANSP.bus; break;}
       default: llegarKg = kmTotal*0.15;
     }
 
@@ -1151,11 +1145,24 @@ function CenterText({ viewBox, totalKg }: any) {
                   </select>
                 </div>
                 {st.transporte.medio.startsWith("Auto") && (
-                  <div>
-                    <label className="text-sm">Pasajeros (incluyéndote)</label>
-                    <input type="number" min={1} className="mt-1 w-full border rounded-md px-3 py-2" value={st.transporte.pasajeros_auto} onChange={e=>{const v = Math.min(8, Math.max(1, Number(e.target.value||1))); set("transporte.pasajeros_auto", v);}} />
-                  </div>
-                )}
+  <div>
+    <label className="text-sm">Pasajeros (incluyéndote)</label>
+    <select
+      className="mt-1 w-full border rounded-md px-3 py-2"
+      value={st.transporte.pasajeros_auto}
+      onChange={e =>
+        set("transporte.pasajeros_auto", Number(e.target.value))
+      }
+    >
+      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+        <option key={n} value={n}>
+          {n}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
+
                 {st.transporte.medio==="Auto eléctrico" && (
                   <div className="sm:col-span-2">
                     <label className="text-sm">Consumo p/auto eléctrico (kWh/100 km)</label>
