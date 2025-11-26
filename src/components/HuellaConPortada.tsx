@@ -1145,23 +1145,11 @@ function CenterText({ viewBox, totalKg }: any) {
                   </select>
                 </div>
                 {st.transporte.medio.startsWith("Auto") && (
-  <div>
-    <label className="text-sm">Pasajeros (incluyéndote)</label>
-    <select
-      className="mt-1 w-full border rounded-md px-3 py-2"
-      value={st.transporte.pasajeros_auto}
-      onChange={e =>
-        set("transporte.pasajeros_auto", Number(e.target.value))
-      }
-    >
-      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-        <option key={n} value={n}>
-          {n}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
+                  <div>
+                    <label className="text-sm">Pasajeros (incluyéndote)</label><select className="mt-1 w-full border rounded-md px-3 py-2" value={st.transporte.pasajeros_auto}onChange={e =>
+                     set("transporte.pasajeros_auto", Number(e.target.value))  } >   {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (   <option key={n} value={n}>   {n}</option>))}</select>
+                     </div>
+                    )}
 
                 {st.transporte.medio==="Auto eléctrico" && (
                   <div className="sm:col-span-2">
@@ -1205,20 +1193,20 @@ function CenterText({ viewBox, totalKg }: any) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">Noches</label>
-                  <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.noches} onChange={e=>set("alojamiento.noches", Number(e.target.value||0))} />
-                </div>
-                <div>
+                  <label className="text-sm">Noches</label><select className="mt-1 w-full border rounded-md px-3 py-2"value={st.alojamiento.noches}
+                  onChange={e => set("alojamiento.noches", Number(e.target.value))}>{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((n) => ( <option key={n} value={n}>{n}</option>))}</select>
+                  </div>
+                  <div>
                   <label className="text-sm">Calefacción</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.calefaccion} onChange={e=>set("alojamiento.calefaccion", e.target.value)}>
                     {["Leña","Gas","Diésel","Electricidad","Ninguna"].map(x=>(<option key={x} value={x}>{x}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">Compartido (personas totales)</label>
-                  <input type="number" min={1} className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.personas_total} onChange={e=>set("alojamiento.personas_total", Number(e.target.value||1))} />
-                </div>
-              </div>
+                  <label className="text-sm">Compartido (personas totales)</label><select className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.personas_total}
+                  onChange={e => set("alojamiento.personas_total", Number(e.target.value))}> {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (<option key={n} value={n}>{n}</option>))}</select>
+                  </div>
+                  </div>
             </CardContent>
           </Card>
         )}
