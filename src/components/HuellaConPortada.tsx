@@ -264,10 +264,10 @@ function Calculadora(){
   // Banner por cada paso del formulario
   const bannerMap: Record<number, string> = {
     0: "/foto-identificacion.jpg",
-    1: "/foto-transporte.jpg",
+    1: "/foto-transporte.JPG",
     2: "/foto-alojamiento.jpg",
     3: "/foto-alimentacion.jpg",
-    4: "/foto-actividades.jpeg",
+    4: "/foto-actividades.JPEG",
     5: "/foto-residuos.jpg",
     6: "/foto-resultados.jpg",
   };
