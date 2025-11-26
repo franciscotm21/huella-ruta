@@ -316,7 +316,7 @@ function Calculadora(){
     if (st.transporte.uso_local.includes("Moto de nieve")) localKg += 2*F_TRANSP.moto_nieve_h;
     if (st.transporte.uso_local.includes("Snowcat/andarivel")) localKg += 2*F_TRANSP.snowcat_h;
     if (st.transporte.uso_local.includes("Motocicleta (verano)")) localKg += km_local * F_TRANSP.motocicleta_verano;
-    if (st.transporte.uso_local.includes("Cuadrimoto (verano)")) localKg += km_local * F_TRANSP.cuadrimoto_verano;
+    if (st.transporte.uso_local.includes("Cuatrimoto (verano)")) localKg += km_local * F_TRANSP.cuadrimoto_verano;
 
 
     const noches = st.alojamiento.noches;
@@ -1042,19 +1042,42 @@ function CenterText({ viewBox, totalKg }: any) {
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6">
 
-  {/* FILA 1: Texto + Logo arriba ocupando TODO el ancho */}
-  <div className="flex items-start gap-3 mb-4">
-    <img src="/logo.png" alt="Logo" className="h-20 w-auto" />
-    <div>
-      <h1 className="text-3xl font-semibold leading-tight">
-        Calcula tu huella de carbono - 
-        Reserva de Biósfera "Corredor Biológico Nevados de Chillán - Laguna del Laja"
-      </h1>
-      <p className="text-sm text-slate-500 mt-3">
-        Calcula tu impacto y recibe acciones locales para reducir y compensar.
-      </p>
-    </div>
+  {/* FILA 1: Logos + Título centrado */}
+<div className="mb-4 flex flex-col items-center gap-3 lg:flex-row lg:items-center lg:justify-between">
+  {/* Logo izquierdo */}
+  <img
+    src="/logo.png"
+    alt="Logo Reserva"
+    className="h-16 w-auto lg:h-20"
+  />
+
+  {/* Títulos centrados */}
+  <div className="text-center lg:flex-1">
+    {/* Línea 1: título principal */}
+    <h1 className="text-3xl font-extrabold leading-tight lg:text-4xl">
+      Calcula tu huella de carbono
+    </h1>
+
+    {/* Línea 2: nombre de la Reserva */}
+    <p className="mt-1 text-lg font-medium text-slate-800 lg:text-xl">
+      Reserva de Biósfera "Corredor Biológico Nevados de Chillán - Laguna del Laja"
+    </p>
+
+    {/* Línea 3: subtítulo */}
+    <p className="mt-2 text-sm text-slate-500">
+      Calcula tu impacto y recibe acciones locales para reducir y compensar.
+    </p>
   </div>
+
+  {/* Logo derecho */}
+  <img
+    src="/logo2.png"
+    alt="Logo aliado"
+    className="h-16 w-auto lg:h-20"
+  />
+</div>
+
+
 
   {/* FILA 2: Indicadores ABAJO, horizontal */}
     <div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start">
@@ -1142,7 +1165,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div className="sm:col-span-2">
                   <label className="text-sm">Transporte local utilizado</label>
                   <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    {["Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Bicicleta","A pie","Motocicleta (verano)","Cuadrimoto (verano)","Otro"].map(opt=>(
+                    {["Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Bicicleta","A pie","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
                       <label key={opt} className="flex items-center gap-2">
                         <input type="checkbox" checked={st.transporte.uso_local.includes(opt)} onChange={e=>{
                           const setSel = new Set(st.transporte.uso_local);
@@ -1524,9 +1547,8 @@ function CenterText({ viewBox, totalKg }: any) {
                       <p className="text-xs uppercase tracking-wide text-emerald-100">
                         Huella estimada de tu visita
                       </p>
-                      <div className="mt-2 flex justify-center">
-  <AnimatedTotalKg value={totalKg} />
-</div>
+                      <div className="mt-2 flex justify-center"> <AnimatedTotalKg value={totalKg} />
+                      </div>
 
                       {/* PERFIL ESTIMADO CENTRADO */}
                       <div className="mt-4 flex justify-center">
@@ -1671,10 +1693,10 @@ function CenterText({ viewBox, totalKg }: any) {
       <footer className="mt-12 border-t">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="text-slate-400">
-              Corredor Biológico Nevados de Chillán – Laguna del Laja
+            <p className="font-medium text-slate-600">
+              Reserva de Biosfera
             </p>
-            <p className="text-slate-400">(Ñuble/Biobío).</p>
+            <p className="text-slate-400">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
           </div>
           <div>
             <p className="font-medium text-slate-600">
@@ -1686,10 +1708,10 @@ function CenterText({ viewBox, totalKg }: any) {
           </div>
           <div>
             <p className="font-medium text-slate-600">
-              Calculadora de huella de carbono
+              Gobierno Regional de Ñuble
             </p>
             <p className="text-slate-500 mt-1">
-              Mide y contribuye con tu visita
+              Juntos por un futuro mejor
             </p>
           </div>
         </div>
