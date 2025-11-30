@@ -1994,7 +1994,7 @@ function CenterText({ viewBox, totalKg }: any) {
                   </div>
                   
                    {/* Botones */}
-                  <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="hidden lg:flex flex-wrap gap-2 pt-1">
                     <button
                       type="button"
                       onClick={exportarPDF}
@@ -2021,6 +2021,33 @@ function CenterText({ viewBox, totalKg }: any) {
             </CardContent>
           </Card>
         )}
+
+        {/* Botones al final (solo móvil / tablet) */}
+{paso === 6 && (
+  <div className="max-w-5xl mx-auto px-4 mt-4 flex flex-col sm:flex-row gap-2 lg:hidden">
+    <button
+      type="button"
+      onClick={exportarPDF}
+      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 w-full sm:w-auto"
+    >
+      📄 Guarda tu registro
+    </button>
+    <button
+      type="button"
+      onClick={() => {
+        setSt(ESTADO_INICIAL);
+        setPaso(0);
+        trackEvent("calculator_reset", {
+          category: "Calculadora",
+        });
+      }}
+      className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 w-full sm:w-auto"
+    >
+      🔄 Nuevo viaje
+    </button>
+  </div>
+)}
+
 
         {/* Navegación pasos */}
         <div className="flex items-center justify-between my-6">
@@ -2198,7 +2225,7 @@ function CenterText({ viewBox, totalKg }: any) {
                          <span>Alto</span>
                          </div>
                          </div>
-                         
+
     {/* Tarjeta con porcentaje + estrella animada */}
     <div className="relative shrink-0 rounded-xl bg-white/90 border border-emerald-300 px-3 py-2 text-center shadow-sm">
       <p className="text-[11px] text-slate-500">Compromiso</p>
