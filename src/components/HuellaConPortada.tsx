@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Label } from "recharts";
 import {motion,AnimatePresence,useMotionValue,useTransform,animate,} from "framer-motion";
-import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck } from "lucide-react";
+import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck, Plug, PillBottle, X, Star} from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { trackEvent } from "@/lib/analytics"; // ajusta la ruta según tu estructura
@@ -261,6 +261,27 @@ function Calculadora(){
 
     const [tabResultados, setTabResultados] = useState<"desglose" | "acciones">("desglose");
 
+      // Acción principal seleccionada
+  const [accionActiva, setAccionActiva] = useState<{ categoria: string; index: number } | null>(
+    null
+  );
+
+  // Slider de compromiso
+  const [compromiso, setCompromiso] = useState(70);
+
+  const compromisoLabel = useMemo(() => {
+    if (compromiso <= 25) {
+      return "Estás comenzando a considerar esta acción. Dar el primer paso ya marca una diferencia.";
+    }
+    if (compromiso <= 60) {
+      return "Buen compromiso: es probable que la integres en tu próxima visita si la tienes presente al planificar.";
+    }
+    if (compromiso <= 85) {
+      return "Compromiso alto: esta acción puede transformarse en parte habitual de tu forma de visitar la Reserva.";
+    }
+    return "Compromiso máximo: estás dispuesto a que esta acción sea un sello permanente de tus viajes al territorio.";
+  }, [compromiso]);
+
   // Banner por cada paso del formulario
   const bannerMap: Record<number, string> = {
     0: "/foto-identificacion.jpg",
@@ -392,17 +413,12 @@ const resAgua = (res + agua) * diasVisita * factorBotellas;
   // === Equivalencias simples a partir del total ===
 // Supongamos que un árbol nativo captura ~20 kg CO₂ por año
 const kgPorArbolPorAnio = 20;
-
-const aniosArbolEquivalentes =
-  totalKg > 0 ? totalKg / kgPorArbolPorAnio : 0;
+const aniosArbolEquivalentes = totalKg > 0 ? totalKg / kgPorArbolPorAnio : 0;
 
 // Árboles necesarios redondeados a ENTERO (mínimo 1)
-const arbolesEquivalentes =
-  totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPorArbolPorAnio)) : 0;
+const arbolesEquivalentes = totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPorArbolPorAnio)) : 0;
 
-
-
-   // % que representa la categoría de mayor contribución
+// % que representa la categoría de mayor contribución
   const topEntry = desglose.find((d) => d.name === topCat);
   const topPct = topEntry && totalKg > 0 ? (topEntry.kg / totalKg) * 100 : 0;
 
@@ -436,17 +452,13 @@ const arbolesEquivalentes =
 
       {/* Número animado */}
       <div className="relative flex items-baseline gap-1">
-        <motion.span
-          style={{ fontVariantNumeric: "tabular-nums" }}
-          className="text-4xl sm:text-5xl font-extrabold tracking-tight"
-        >
-          {rounded}
+        <motion.span style={{ fontVariantNumeric: "tabular-nums" }} className="text-4xl sm:text-5xl font-extrabold tracking-tight">{rounded}
         </motion.span>
         <span className="text-xl sm:text-2xl font-extrabold">kg CO₂e</span>
       </div>
-    </div>
-  );
-}
+      </div>
+      );
+    }
 
   
   const colores = ["#10b981","#0ea5e9","#f59e0b","#ef4444","#6366f1","#14b8a6"];
@@ -461,31 +473,378 @@ const arbolesEquivalentes =
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
     "Transporte ida/regreso": [
       { icon:<Car className="w-4 h-4"/>, titulo:"Comparte el auto", texto:"Llena los asientos: baja el CO2 por persona."},
-      { icon:<Plane className="w-4 h-4"/>, titulo:"Combina bus + avión", texto:"Reduce el tramo aéreo cuando sea posible."},
+      { icon:<Plane className="w-4 h-4"/>, titulo:"Prefiere bus o tren", texto:"Reduce el tramo aéreo cuando sea posible."},
       { icon:<Bike className="w-4 h-4"/>, titulo:"Elige rutas cercanas", texto:"Prefiere destinos del corredor más próximos."},
+      { icon:<Home className="w-4 h-4"/>, titulo:"Planea estadías largas", texto:"Menos viajes largos al año y más días en cada visita."},
     ],
     "Transporte local": [
-      { icon:<Truck className="w-4 h-4"/>, titulo:"Van compartida", texto:"Evita múltiples autos dentro del valle."},
+      { icon:<Truck className="w-4 h-4"/>, titulo:"Van compartida", texto:"Evita múltiples autos dentro de la reserva."},
       { icon:<MountainSnow className="w-4 h-4"/>, titulo:"Limita moto de nieve", texto:"Solo si es necesario; prioriza andariveles."},
-      { icon:<Bike className="w-4 h-4"/>, titulo:"Bici o a pie", texto:"Para trayectos cortos, sin motor."},
+      { icon:<Bike className="w-4 h-4"/>, titulo:"Bici o a pie", texto:"Para trayectos cortos, sin motor y aprovecha a conocer mejor el entorno."},
     ],
     "Alojamiento": [
       { icon:<Home className="w-4 h-4"/>, titulo:"Alojamiento eficiente", texto:"Prefiere cabañas/hostales con eficiencia energética."},
-      { icon:<Zap className="w-4 h-4"/>, titulo:"Calefacción limpia", texto:"Leña seca certificada o electricidad eficiente."},
+      { icon:<Zap className="w-4 h-4"/>, titulo:"Calefacción limpia", texto:"Proriza leña seca certificada, pellets o electricidad eficiente."},
+      { icon:<Plug className="w-4 h-4"/>, titulo:"Apaga y desenchufa", texto:"Al salir, apaga luces, baja la calefacción y desenchufa equipos en stand-by."},
     ],
     "Alimentación": [
-      { icon:<BadgeCheck className="w-4 h-4"/>, titulo:"Compra local", texto:"Más impacto en la comunidad, menos transporte."},
-      { icon:<Recycle className="w-4 h-4"/>, titulo:"Menos envases", texto:"Usa contenedores reutilizables."},
-      {icon: <Flame className="w-4 h-4" />,titulo: "Reduce carnes rojas (vacuno)",texto:"Durante un tiempo, prioriza pollo, pescado, legumbres y opciones vegetale."},
+      { icon:<BadgeCheck className="w-4 h-4"/>, titulo:"Compra local", texto:"Elige productos locales y de temporada: más impacto en la comunidad, menos transporte."},
+      { icon:<Recycle className="w-4 h-4"/>, titulo:"Menos envases", texto:"Lleva tu botella reutilizable y usa contenedores reutilizables."},
+      {icon: <Flame className="w-4 h-4" />,titulo: "Reduce carnes rojas (vacuno)",texto:"Durante un tiempo, prioriza pollo, pescado, legumbres y opciones vegetales."},
     ],
     "Actividades": [
       { icon:<Trees className="w-4 h-4"/>, titulo:"Más trekking/MTB", texto:"Prioriza actividades de bajo impacto."},
-      { icon:<MountainSnow className="w-4 h-4"/>, titulo:"Optimiza ski/snow", texto:"Concentra horas y evita traslados extra."},
+      { icon:<MountainSnow className="w-4 h-4"/>, titulo:"Optimiza ski/snow", texto:"Agrupa tus horas en menos días y evita traslados extra."},
+      { icon:<Leaf className="w-4 h-4"/>, titulo:"Prefiere operadores responsables", texto:"Elige tours con buenas prácticas ambientales y grupos pequeños."},
     ],
     "Residuos/Agua": [
-      { icon:<Recycle className="w-4 h-4"/>, titulo:"Basura cero", texto:"Separa y retorna residuos si no hay gestión."},
-      { icon:<Droplets className="w-4 h-4"/>, titulo:"Ahorro de agua", texto:"Duchas cortas y uso racional."},
+      { icon:<Recycle className="w-4 h-4"/>, titulo:"Basura cero", texto:"Separa y retorna tus residuos si no hay gestión local."},
+      { icon:<Droplets className="w-4 h-4"/>, titulo:"Ahorro de agua", texto:"Haz duchas cortas y usa el agua de forma racional."},
+      { icon:<PillBottle className="w-4 h-4"/>, titulo:"Reutiliza y rellena", texto:"Rellena tu botella en puntos seguros en vez de comprar botellas desechables."},
     ]
+  };
+
+// Detalle base por categoría
+  const detallesCategoria: Record<
+    string,
+    {
+      resumen: string;
+      antes: string[];
+      durante: string[];
+      despues: string[];
+    }
+  > = {
+    "Transporte ida/regreso": {
+      resumen:
+        "Los trayectos largos para llegar a la Reserva suelen ser la mayor fuente de CO₂. Planificar mejor cada viaje permite disfrutar más días con menos emisiones acumuladas al año.",
+      antes: [
+        "Evalúa si puedes coordinar el viaje con familiares o amistades para compartir auto o bus.",
+        "Revisa alternativas de transporte público hasta Chillán/Los Ángeles y solo el tramo final en vehículo.",
+        "Compara rutas: a veces una ruta un poco más larga pero con menos detenciones y taco emite menos.",
+      ],
+      durante: [
+        "Mantén una velocidad de conducción estable y moderada: consume menos combustible.",
+        "Evita llevar peso innecesario en el auto (carga extra aumenta el consumo).",
+        "Si viajas en avión, intenta agrupar actividades para que ese viaje cubra varios días de estadía.",
+      ],
+      despues: [
+        "Registra en la calculadora tus viajes del año y fíjate cuántos puedes reemplazar por uno más largo.",
+        "Comparte con tu grupo las cifras de huella por persona para generar conversación y cambios.",
+        "Comprométete a que tu próximo viaje a la Reserva sea con transporte compartido o público.",
+      ],
+    },
+    "Transporte local": {
+      resumen:
+        "Los traslados dentro del valle, sobre todo en vehículos 4x4 o motos de nieve, pueden sumar bastante huella sin que nos demos cuenta.",
+      antes: [
+        "Elige alojamiento cercano a los senderos o centros de ski para reducir traslados internos.",
+        "Planifica tus salidas en bloques (mañana/tarde) para evitar varios viajes cortos.",
+        "Pregunta por servicios de van compartida o traslados comunitarios en la zona.",
+      ],
+      durante: [
+        "Cuando puedas, deja el auto estacionado y muévete a pie o en bicicleta.",
+        "Organiza al grupo para salir en un solo vehículo, no en varios autos.",
+        "Si usas moto de nieve o cuatrimoto, que sea puntual y no la regla del viaje.",
+      ],
+      despues: [
+        "Piensa qué trayectos podrían haberse hecho caminando y anótalo para la próxima visita.",
+        "Recomienda a otros visitantes rutas caminables y miradores accesibles sin vehículo.",
+        "Sugiere a tu alojamiento o tour operador más opciones de transporte compartido.",
+      ],
+    },
+    Alojamiento: {
+      resumen:
+        "El tipo de alojamiento y su calefacción influyen directamente en la huella de tu visita, especialmente en invierno.",
+      antes: [
+        "Pregunta si el alojamiento usa leña seca certificada, pellets o electricidad eficiente.",
+        "Prefiere cabañas y hostales que cuenten con buen aislamiento térmico y políticas ambientales.",
+        "Comparte la habitación/cabaña con más personas cuando sea posible para repartir el impacto.",
+      ],
+      durante: [
+        "Usa la calefacción solo el tiempo necesario y mantén puertas/ventanas bien cerradas.",
+        "Aprovecha al máximo la luz natural y evita dejar luces encendidas en espacios vacíos.",
+        "Cuida el uso de agua caliente, especialmente en duchas largas.",
+      ],
+      despues: [
+        "Evalúa la experiencia y deja comentarios valorando las buenas prácticas ambientales.",
+        "Repite alojamiento en lugares que sepas que cuidan la eficiencia energética.",
+        "Cuenta a tu red sobre los alojamientos más responsables que conociste en la Reserva.",
+      ],
+    },
+    Alimentación: {
+      resumen:
+        "Lo que comes y dónde lo compras conecta tu huella con la economía local y con los ecosistemas del territorio.",
+      antes: [
+        "Planifica comidas que incluyan más legumbres, verduras y productos locales.",
+        "Revisa restaurantes que trabajen con productores del valle y priorízalos.",
+        "Lleva tu propia botella reutilizable y algunos contenedores para llevar comida.",
+      ],
+      durante: [
+        "Prefiere menús con menos carne roja y más opciones vegetales o de pollo/pescado.",
+        "Evita bebidas en botellas individuales: pide recargas o comparte formatos grandes.",
+        "Pregunta directamente si los ingredientes son locales para incentivar esta práctica.",
+      ],
+      despues: [
+        "Reflexiona cuántas veces optaste por opciones locales y sin envases desechables.",
+        "Comparte con otros visitantes los locales de comida que promueven buenas prácticas.",
+        "Para la próxima visita, súmate al desafío de un día completo con alimentación baja en huella.",
+      ],
+    },
+    Actividades: {
+      resumen:
+        "Las actividades que eliges son parte esencial de la experiencia. Las de bajo impacto permiten disfrutar la Reserva casi sin dejar huella.",
+      antes: [
+        "Incluye en tu planificación más trekking, rutas de MTB y observación de fauna.",
+        "Infórmate sobre operadores turísticos que respeten las normas de conservación.",
+        "Limita desde el diseño del viaje el uso de actividades motorizadas recreativas.",
+      ],
+      durante: [
+        "Respeta siempre los senderos habilitados y las zonas de acceso.",
+        "Si ocupas moto de nieve u otra actividad motorizada, compensa con días de actividades de bajo impacto.",
+        "Evita generar ruido excesivo y respeta la fauna y flora nativa.",
+      ],
+      despues: [
+        "Valora las experiencias que tuviste con menor huella y anótalas para repetirlas.",
+        "Comenta a otros visitantes cuáles actividades recomendarías para un turismo responsable.",
+        "Evalúa reducir cada año el uso de actividades motorizadas en tus viajes de invierno/verano.",
+      ],
+    },
+    "Residuos/Agua": {
+      resumen:
+        "La gestión de residuos y el uso de agua son visibles para la comunidad local. Tus decisiones ayudan a mantener limpia la Reserva.",
+      antes: [
+        "Lleva contigo una bolsa o estuche para traer de vuelta tus residuos si no hay infraestructura.",
+        "Planea usar botella reutilizable y evita comprar agua en botellas pequeñas.",
+        "Elige artículos de aseo en formatos recargables o sólidos (shampoo, jabón, etc.).",
+      ],
+      durante: [
+        "Separa tus residuos siempre que veas puntos de reciclaje y si no, guárdalos para devolverlos a la ciudad.",
+        "Realiza duchas cortas y cierra el agua al enjabonarte o cepillarte los dientes.",
+        "Evita dejar colillas, plásticos o restos de comida en miradores y senderos.",
+      ],
+      despues: [
+        "Cuantifica cuántos residuos lograste no generar usando formatos reutilizables.",
+        "Cuenta tu experiencia cero-basura a otros viajeros para inspirarlos.",
+        "Para la próxima visita, proponte reducir aún más el uso de plásticos de un solo uso.",
+      ],
+    },
+  };
+
+  // Detalle específico por acción (basado en las categorías anteriores)
+  const detallesAcciones: Record<
+    string,
+    Record<
+      string,
+      {
+        resumen: string;
+        antes: string[];
+        durante: string[];
+        despues: string[];
+      }
+    >
+  > = {
+    "Transporte ida/regreso": {
+      "Comparte el auto": {
+        resumen:
+          "Compartir el auto reduce fuertemente las emisiones por persona en trayectos largos hacia la Reserva.",
+        antes: [
+          "Coordina con 3–5 personas para usar un solo vehículo bien ocupado.",
+          ...detallesCategoria["Transporte ida/regreso"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte ida/regreso"].durante,
+        despues: detallesCategoria["Transporte ida/regreso"].despues,
+      },
+      "Prefiere bus o tren": {
+        resumen:
+          "Usar bus o tren en lugar de auto particular o avión baja drásticamente tu huella de transporte.",
+        antes: [
+          "Cotiza pasajes en bus o tren con anticipación para asegurar horarios y precios convenientes.",
+          ...detallesCategoria["Transporte ida/regreso"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte ida/regreso"].durante,
+        despues: detallesCategoria["Transporte ida/regreso"].despues,
+      },
+      "Elige rutas cercanas": {
+        resumen:
+          "Elegir destinos más cercanos dentro del corredor biológico permite reducir kilómetros recorridos al año.",
+        antes: [
+          "Revisa opciones de destinos dentro del mismo corredor que requieran menos horas de viaje.",
+          ...detallesCategoria["Transporte ida/regreso"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte ida/regreso"].durante,
+        despues: detallesCategoria["Transporte ida/regreso"].despues,
+      },
+      "Planea estadías largas": {
+        resumen:
+          "Quedarte más noches por viaje te permite reducir la cantidad de traslados largos que haces en el año.",
+        antes: [
+          "Reorganiza tu calendario para combinar actividades en una sola estadía más extensa.",
+          ...detallesCategoria["Transporte ida/regreso"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte ida/regreso"].durante,
+        despues: detallesCategoria["Transporte ida/regreso"].despues,
+      },
+    },
+    "Transporte local": {
+      "Van compartida": {
+        resumen:
+          "Usar vans compartidas reduce autos circulando al interior del valle y facilita la logística de grupos.",
+        antes: [
+          "Pregunta con anticipación a tu alojamiento o tour operador por servicios de van compartida.",
+          ...detallesCategoria["Transporte local"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte local"].durante,
+        despues: detallesCategoria["Transporte local"].despues,
+      },
+      "Limita moto de nieve": {
+        resumen:
+          "Las motos de nieve tienen una huella alta. Reservarlas para usos puntuales baja mucho tu impacto.",
+        antes: [
+          "Decide de antemano cuántas horas máximo usarás moto de nieve y en qué contexto.",
+          ...detallesCategoria["Transporte local"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte local"].durante,
+        despues: detallesCategoria["Transporte local"].despues,
+      },
+      "Bici o a pie": {
+        resumen:
+          "Caminar o usar bicicleta en trayectos cortos te conecta con el paisaje y prácticamente no emite CO₂.",
+        antes: [
+          "Incluye en tu equipaje calzado cómodo o bicicleta si el terreno y la logística lo permiten.",
+          ...detallesCategoria["Transporte local"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Transporte local"].durante,
+        despues: detallesCategoria["Transporte local"].despues,
+      },
+    },
+    Alojamiento: {
+      "Alojamiento eficiente": {
+        resumen:
+          "Un alojamiento eficiente en energía reduce el consumo total de la estadía sin sacrificar confort.",
+        antes: [
+          "Revisa en las fichas del alojamiento si mencionan eficiencia energética o certificaciones ambientales.",
+          ...detallesCategoria["Alojamiento"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alojamiento"].durante,
+        despues: detallesCategoria["Alojamiento"].despues,
+      },
+      "Calefacción limpia": {
+        resumen:
+          "Usar leña seca certificada, pellets o electricidad eficiente reduce contaminación local y CO₂.",
+        antes: [
+          "Pregunta explícitamente por el tipo de calefacción y prioriza opciones con combustibles más limpios.",
+          ...detallesCategoria["Alojamiento"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alojamiento"].durante,
+        despues: detallesCategoria["Alojamiento"].despues,
+      },
+      "Apaga y desenchufa": {
+        resumen:
+          "Apagar y desenchufar equipos cuando no se usan disminuye el consumo eléctrico silencioso.",
+        antes: [
+          "Incluye en tu checklist de viaje el hábito de revisar enchufes y luces antes de salir de la cabaña.",
+          ...detallesCategoria["Alojamiento"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alojamiento"].durante,
+        despues: detallesCategoria["Alojamiento"].despues,
+      },
+    },
+    Alimentación: {
+      "Compra local": {
+        resumen:
+          "Comprar a productores y locales del valle conecta tu gasto con la economía del territorio y reduce transporte.",
+        antes: [
+          "Identifica ferias, almacenes y restaurantes que trabajan con productores locales.",
+          ...detallesCategoria["Alimentación"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alimentación"].durante,
+        despues: detallesCategoria["Alimentación"].despues,
+      },
+      "Menos envases": {
+        resumen:
+          "Reducir envases de un solo uso baja tu huella de residuos y la presión sobre la gestión local.",
+        antes: [
+          "Lleva tu botella reutilizable y algunos contenedores plegables para snacks o sobras.",
+          ...detallesCategoria["Alimentación"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alimentación"].durante,
+        despues: detallesCategoria["Alimentación"].despues,
+      },
+      "Reduce carnes rojas (vacuno)": {
+        resumen:
+          "Bajar el consumo de carne roja durante el viaje tiene un efecto directo en la huella alimentaria.",
+        antes: [
+          "Piensa menús alternativos con más legumbres, verduras y otras proteínas antes de viajar.",
+          ...detallesCategoria["Alimentación"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Alimentación"].durante,
+        despues: detallesCategoria["Alimentación"].despues,
+      },
+    },
+    Actividades: {
+      "Más trekking/MTB": {
+        resumen:
+          "Dar protagonismo al trekking y al MTB te permite explorar el territorio con muy baja huella.",
+        antes: [
+          "Diseña tus días priorizando rutas de trekking y MTB según tu nivel y clima.",
+          ...detallesCategoria["Actividades"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Actividades"].durante,
+        despues: detallesCategoria["Actividades"].despues,
+      },
+      "Optimiza ski/snow": {
+        resumen:
+          "Agrupar horas de ski/snow en menos días y con menos traslados reduce emisiones y costos.",
+        antes: [
+          "Planifica qué días dedicarás a ski/snow para reducir viajes extra al centro invernal.",
+          ...detallesCategoria["Actividades"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Actividades"].durante,
+        despues: detallesCategoria["Actividades"].despues,
+      },
+      "Prefiere operadores responsables": {
+        resumen:
+          "Elegir operadores responsables asegura que tu experiencia turística aporte a la conservación.",
+        antes: [
+          "Infórmate sobre políticas ambientales y tamaño de grupos de cada operador.",
+          ...detallesCategoria["Actividades"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Actividades"].durante,
+        despues: detallesCategoria["Actividades"].despues,
+      },
+    },
+    "Residuos/Agua": {
+      "Basura cero": {
+        resumen:
+          "Apuntar a basura casi cero disminuye la presión sobre la infraestructura local y protege el paisaje.",
+        antes: [
+          "Prepara un kit de residuos (bolsa reutilizable, contenedores) para traer todo de vuelta.",
+          ...detallesCategoria["Residuos/Agua"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Residuos/Agua"].durante,
+        despues: detallesCategoria["Residuos/Agua"].despues,
+      },
+      "Ahorro de agua": {
+        resumen:
+          "El agua en la montaña es un recurso clave. Usarla con cuidado reduce impacto sobre ríos y napas.",
+        antes: [
+          "Considera productos de higiene que requieran menos agua (por ejemplo, formatos sólidos).",
+          ...detallesCategoria["Residuos/Agua"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Residuos/Agua"].durante,
+        despues: detallesCategoria["Residuos/Agua"].despues,
+      },
+      "Reutiliza y rellena": {
+        resumen:
+          "Rellenar tu botella evita decenas de envases plásticos en cada viaje.",
+        antes: [
+          "Identifica puntos seguros de recarga (alojamiento, restaurantes, miradores equipados).",
+          ...detallesCategoria["Residuos/Agua"].antes.slice(1),
+        ],
+        durante: detallesCategoria["Residuos/Agua"].durante,
+        despues: detallesCategoria["Residuos/Agua"].despues,
+      },
+    },
   };
 
   // Perfil estimado según totalKg CO2 en Resultados
@@ -1032,6 +1391,17 @@ function CenterText({ viewBox, totalKg }: any) {
     });
   };
 
+  const accionSeleccionada =
+    accionActiva && acciones[accionActiva.categoria]
+      ? acciones[accionActiva.categoria][accionActiva.index]
+      : null;
+
+  const detalleSeleccionado =
+    accionActiva && accionSeleccionada
+      ? detallesAcciones[accionActiva.categoria]?.[accionSeleccionada.titulo] ??
+        detallesCategoria[accionActiva.categoria]
+      : undefined;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6">
@@ -1576,8 +1946,8 @@ function CenterText({ viewBox, totalKg }: any) {
                       </div>
                     </div>
                   </div>
-
-                  {/* Acciones principales */}
+                  
+                  {/* Acciones principales (clickeables) */}
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-2">
                     <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
                       Acciones principales según mayor contribución
@@ -1588,46 +1958,43 @@ function CenterText({ viewBox, totalKg }: any) {
                       {topPct.toFixed(1)}% de tu huella).
                     </p>
                     <p className="text-xs text-emerald-800/90">
-                      Si mejoras esta categoría, lograrás el mayor impacto en
-                      la reducción de CO₂. Te sugerimos comenzar por estas
-                      acciones:
+                      Si mejoras esta categoría, lograrás el mayor impacto en la reducción de
+                      CO₂. Toca una acción para ver un plan detallado para tu próxima visita.
                     </p>
 
                     <ul className="mt-2 space-y-2">
                       {(acciones[topCat] || []).map((a, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-start gap-2 rounded-xl bg-white/80 px-3 py-2 border border-emerald-100"
-                        >
-                          <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                            {a.icon}
-                          </span>
-                          <div>
-                            <p className="text-sm font-medium text-emerald-900">
-                              {a.titulo}
-                            </p>
-                            <p className="text-xs text-emerald-700">
-                              {a.texto}
-                            </p>
-                          </div>
+                        <li key={idx}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAccionActiva({ categoria: topCat, index: idx });
+                              trackEvent("action_detail_open", {
+                                category: "Calculadora",
+                                categoria: topCat,
+                                accion: a.titulo,
+                                totalKg,
+                              });
+                            }}
+                            className="w-full flex items-start gap-2 rounded-xl bg-white/80 px-3 py-2 border border-emerald-100 text-left transition hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                          >
+                            <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                              {a.icon}
+                            </span>
+                            <div>
+                              <p className="text-sm font-medium text-emerald-900">
+                                {a.titulo}
+                              </p>
+                              <p className="text-xs text-emerald-700">{a.texto}</p>
+                            </div>
+                          </button>
                         </li>
                       ))}
                     </ul>
                   </div>
-
-                  {/* Botones */}
+                  
+                   {/* Botones */}
                   <div className="flex flex-wrap gap-2 pt-1">
-                     {/* Botón JSON oculto / eliminado
-
-                    <button
-                      onClick={exportar}
-                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
-                    >
-                      <Download className="w-4 h-4" />
-                      Exportar JSON
-                    </button>
-
-                     */}
                     <button
                       type="button"
                       onClick={exportarPDF}
@@ -1655,7 +2022,7 @@ function CenterText({ viewBox, totalKg }: any) {
           </Card>
         )}
 
-        {/* Navegación de pasos */}
+        {/* Navegación pasos */}
         <div className="flex items-center justify-between my-6">
           <button
             onClick={() => {
@@ -1688,29 +2055,194 @@ function CenterText({ viewBox, totalKg }: any) {
       <footer className="mt-12 border-t">
         <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
           <div>
-            <p className="font-medium text-slate-600">
-              Reserva de Biosfera
-            </p>
-            <p className="text-slate-400">Corredor Biológico Nevados de Chillán – Laguna del Laja</p>
-          </div>
-          <div>
-            <p className="font-medium text-slate-600">
-              Universidad de Concepción
-            </p>
-            <p className="text-slate-500 mt-1">
-              Departamento de Ingeniería Industrial
+            <p className="font-medium text-slate-600">Reserva de Biosfera</p>
+            <p className="text-slate-400">
+              Corredor Biológico Nevados de Chillán – Laguna del Laja
             </p>
           </div>
           <div>
-            <p className="font-medium text-slate-600">
-              Gobierno Regional de Ñuble
-            </p>
-            <p className="text-slate-500 mt-1">
-              Juntos por un futuro mejor
-            </p>
+            <p className="font-medium text-slate-600">Universidad de Concepción</p>
+            <p className="text-slate-500 mt-1">Departamento de Ingeniería Industrial</p>
+          </div>
+          <div>
+            <p className="font-medium text-slate-600">Gobierno Regional de Ñuble</p>
+            <p className="text-slate-500 mt-1">Juntos por un futuro mejor</p>
           </div>
         </div>
       </footer>
+
+      {/* MODAL DE ACCIÓN SELECCIONADA */}
+      <AnimatePresence>
+        {accionActiva && accionSeleccionada && detalleSeleccionado && (
+          <motion.div
+            key="detalle-accion"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center px-4"
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              className="relative max-w-2xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white p-6 shadow-2xl"
+            >
+              <button
+                type="button"
+                onClick={() => setAccionActiva(null)}
+                className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="mb-4 flex flex-wrap gap-2 items-center">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                  <Leaf className="w-3 h-3" />
+                  Acción prioritaria
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  {accionActiva.categoria}
+                </span>
+              </div>
+
+              {/* Título + imagen */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                    {accionSeleccionada.icon}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                    {accionSeleccionada.titulo}
+                  </h2>
+                </div>
+                <img
+                  src="/accion-generica.png"
+                  alt="Ilustración de la acción"
+                  className="hidden sm:block h-24 w-24 rounded-md object-cover"
+                />
+              </div>
+
+              <p className="mt-2 text-sm text-slate-600">
+                {accionSeleccionada.texto}
+              </p>
+
+              <div className="mt-5 border-t pt-4 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    ¿Por qué importa en la Reserva?
+                  </p>
+                  <p className="mt-1 text-sm text-slate-700">
+                    {detalleSeleccionado.resumen}
+                  </p>
+                </div>
+
+                {/* Antes / Durante / Después con degradado */}
+                <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                  <div className="rounded-xl bg-gradient-to-b from-emerald-50 via-white to-emerald-50/70 border border-emerald-100 p-3">
+                    <p className="text-xs font-semibold text-emerald-800 uppercase mb-1">
+                      Antes del viaje
+                    </p>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {detalleSeleccionado.antes.map((t, i) => (
+                        <li key={i} className="flex gap-1.5">
+                          <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl bg-gradient-to-b from-sky-50 via-white to-sky-50/70 border border-sky-100 p-3">
+                    <p className="text-xs font-semibold text-sky-800 uppercase mb-1">
+                      Durante tu visita
+                    </p>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {detalleSeleccionado.durante.map((t, i) => (
+                        <li key={i} className="flex gap-1.5">
+                          <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-sky-500" />
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl bg-gradient-to-b from-amber-50 via-white to-amber-50/70 border border-amber-100 p-3">
+                    <p className="text-xs font-semibold text-amber-800 uppercase mb-1">
+                      Después de la visita
+                    </p>
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {detalleSeleccionado.despues.map((t, i) => (
+                        <li key={i} className="flex gap-1.5">
+                          <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                
+                {/* Slider de compromiso */}
+                <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
+                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">
+                  Tu nivel de compromiso con esta acción
+                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
+                    <div className="flex-1">
+                      <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={compromiso}
+                       onChange={(e) => setCompromiso(Number(e.target.value))}
+                       className="w-full accent-emerald-700" /><div className="mt-1 flex justify-between text-[11px] text-emerald-900/70">
+                        <span>Bajo</span>
+                        <span>Medio</span>
+                         <span>Alto</span>
+                         </div>
+                         </div>
+                         
+    {/* Tarjeta con porcentaje + estrella animada */}
+    <div className="relative shrink-0 rounded-xl bg-white/90 border border-emerald-300 px-3 py-2 text-center shadow-sm">
+      <p className="text-[11px] text-slate-500">Compromiso</p>
+      <p className="text-lg font-semibold text-emerald-700">
+        {compromiso}%
+      </p>
+
+      <AnimatePresence>
+        {compromiso === 100 && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0, rotate: -20 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0, opacity: 0, rotate: 20 }}
+            transition={{ type: "spring", stiffness: 260, damping: 16 }}
+            className="absolute -top-3 -right-3 rounded-full bg-amber-400 shadow-lg p-1.5"
+          >
+            <Star className="w-3.5 h-3.5 text-white fill-current" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  </div>
+
+  <p className="mt-2 text-xs text-emerald-900/80 leading-relaxed">
+    {compromisoLabel}
+  </p>
+</div>
+
+                <div className="mt-3 flex flex-wrap gap-2 items-center">
+                  <span className="text-xs text-slate-500">
+                    ¿Te comprometes a aplicar esta acción en tu próxima visita?
+                  </span>
+                  <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-800 gap-2">
+                    <span className="font-semibold">Tip:</span>
+                    <span>
+                      Toma una captura de esta pantalla y guárdala junto a tus planes de viaje.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
