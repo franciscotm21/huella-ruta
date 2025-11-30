@@ -1636,33 +1636,76 @@ function CenterText({ viewBox, totalKg }: any) {
 )}
 
 
-        {paso===4 && (
-          <Card>
-            <CardHeader title="Actividades" icon={<MountainSnow/>} subtitle="Selecciona actividades y horas por actividad." />
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2 grid grid-cols-2 gap-3 text-sm">
-                  {["Ski/Snowboard","Trekking","Cabalgata","MTB","Raquetas","Canopy","Moto de nieve","Otro"].map(act=>(
-                    <label key={act} className="flex items-center gap-2">
-                      <input type="checkbox" checked={st.actividades.seleccion.includes(act)} onChange={e=>{
-                        const setSel = new Set(st.actividades.seleccion);
-                        e.target.checked ? setSel.add(act) : setSel.delete(act);
-                        set("actividades.seleccion", Array.from(setSel));
-                      }} />
-                      {act}
-                    </label>
-                  ))}
-                </div>
-                {st.actividades.seleccion.map(act=>(
-                  <div key={act}>
-                    <label className="text-sm">Horas en {act}</label>
-                    <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.actividades.horas[act]||0} onChange={e=>set(`actividades.horas.${act}`, Number(e.target.value||0))} />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+       {paso===4 && (
+        <Card>
+          <CardHeader
+          title="Actividades"
+          icon={<MountainSnow />}
+          subtitle="Selecciona actividades y horas por actividad."
+          />
+           <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4"> {/* Checkboxes de actividades */}
+               <div className="sm:col-span-2 grid grid-cols-2 gap-3 text-sm"> {["Ski/Snowboard","Trekking","Cabalgata","MTB","Raquetas","Canopy","Moto de nieve","Otro",
+
+               ].map((act) => ( <label key={act} className="flex items-center gap-2">
+                 <input type="checkbox" checked={st.actividades.seleccion.includes(act)} 
+                 onChange={(e) => { const setSel = new Set(st.actividades.seleccion);
+                  e.target.checked ? setSel.add(act) : setSel.delete(act);
+                  set("actividades.seleccion", Array.from(setSel));
+                }}
+                />
+                {act}
+                 </label>
+                 ))}
+                 </div>
+
+        {/* Inputs de horas por actividad seleccionada */}
+        {st.actividades.seleccion.map((act) => {
+          const horasValor = st.actividades.horas[act];
+
+          return (
+            <div key={act}>
+              <label className="text-sm">Horas en {act}</label>
+              <input
+                type="number"
+                min={1}
+                max={48}
+                className="mt-1 w-full border rounded-md px-3 py-2"
+                // Si no hay valor, mostramos input vacío (no 0)
+                value={
+                  horasValor === undefined || horasValor === null
+                    ? ""
+                    : horasValor
+                }
+                onChange={(e) => {
+                  const raw = e.target.value;
+
+                  // Permitir borrar para dejarlo vacío
+                  if (raw === "") {
+                    set(`actividades.horas.${act}`, undefined);
+                    return;
+                  }
+
+                  let v = Number(raw);
+                  if (Number.isNaN(v)) return;
+
+                  // Forzamos mínimo 1 y máximo 48
+                  if (v < 1) v = 1;
+                  if (v > 48) v = 48;
+
+                  set(`actividades.horas.${act}`, v);
+                }}
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Ingresa entre 1 y 48 horas para esta actividad.
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </CardContent>
+  </Card>
+)}
 
         {paso===5 && (
           <Card>
@@ -2145,7 +2188,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <img
                   src="/accion-generica.png"
                   alt="Ilustración de la acción"
-                  className="hidden sm:block h-24 w-24 rounded-md object-cover"
+                  className="hidden sm:block h-28 w-28 rounded-md object-cover"
                 />
               </div>
 
