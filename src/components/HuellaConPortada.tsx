@@ -1474,34 +1474,93 @@ function CenterText({ viewBox, totalKg }: any) {
           <div className="h-full bg-emerald-600" style={{width:`${Math.max(5, progreso)}%`}} />
         </div>
 
-        {paso===0 && (
-        
-          <Card>
-            <CardHeader title="Identificación" icon={<Map/>} subtitle="Origen, destino y distancia (ida; calculamos ida y vuelta)." />
-            <CardContent>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm">Ciudad/punto de origen</label>
-                  <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.origen} onChange={e=>set("id.origen", e.target.value)}>
-                    {Object.keys(DIST_IDA_KM).concat("Otra").map(c => (<option key={c} value={c}>{c}</option>))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm">Destino principal</label>
-                  <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.destino} onChange={e=>set("id.destino", e.target.value)}>
-                    {DESTINOS.concat("Otro").map(x => (<option key={x} value={x}>{x}</option>))}
-                  </select>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm">Distancia estimada ida (km) — personaliza si tu ciudad es lejana</label>
-                  <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.id.km_personalizado} onChange={e=>set("id.km_personalizado", Number(e.target.value||0))} />
-                  <p className="text-xs text-slate-500 mt-1">Si dejas en cero, usamos el valor referencial según tu ciudad. El cálculo considera ida + vuelta.</p>
-                  <p className="text-xs text-slate-500 mt-1"> Usando {Math.round(baseKm)} km de ida según la combinación {st.id.origen} → {st.id.destino}.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+       {paso===0 && (
+  <Card>
+    <CardHeader
+      title="Identificación"
+      icon={<Map />}
+      subtitle="Origen, destino y distancia (ida; calculamos ida y vuelta)."
+    />
+    <CardContent>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm">Ciudad/punto de origen</label>
+          <select
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={st.id.origen}
+            onChange={e => set("id.origen", e.target.value)}
+          >
+            {Object.keys(DIST_IDA_KM)
+              .concat("Otra")
+              .map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm">Destino principal</label>
+          <select
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            value={st.id.destino}
+            onChange={e => set("id.destino", e.target.value)}
+          >
+            {DESTINOS.concat("Otro").map((x) => (
+              <option key={x} value={x}>
+                {x}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className="text-sm">
+            Distancia estimada ida (km) — personaliza si tu ciudad es lejana
+          </label>
+          <input
+            type="number"
+            min={0}
+            className="mt-1 w-full border rounded-md px-3 py-2"
+            // 👇 Si es 0, mostramos el input vacío (no 0)
+            value={
+              st.id.km_personalizado === 0 ||
+              st.id.km_personalizado === null ||
+              st.id.km_personalizado === undefined
+                ? ""
+                : st.id.km_personalizado
+            }
+            onChange={(e) => {
+              const raw = e.target.value;
+
+              // si el usuario borra todo → volvemos a 0 (usar distancia referencial)
+              if (raw === "") {
+                set("id.km_personalizado", 0);
+                return;
+              }
+
+              let v = Number(raw);
+              if (Number.isNaN(v)) return;
+              if (v < 0) v = 0;
+
+              set("id.km_personalizado", v);
+            }}
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            Si dejas en blanco, usamos el valor referencial según tu ciudad. El
+            cálculo considera ida + vuelta.
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Usando {Math.round(baseKm)} km de ida según la combinación{" "}
+            {st.id.origen} → {st.id.destino}.
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
 
         {paso===1 && (
           <Card>
