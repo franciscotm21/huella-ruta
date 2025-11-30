@@ -1589,7 +1589,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div className="sm:col-span-2">
                   <label className="text-sm">Transporte local utilizado</label>
                   <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    {["Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Bicicleta","A pie","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
+                    {["A pie","Bicicleta","Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
                       <label key={opt} className="flex items-center gap-2">
                         <input type="checkbox" checked={st.transporte.uso_local.includes(opt)} onChange={e=>{
                           const setSel = new Set(st.transporte.uso_local);
@@ -1602,10 +1602,48 @@ function CenterText({ viewBox, totalKg }: any) {
                   </div>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-sm">Km locales (ida + vuelta)</label>
-                  <input type="number" min={0} className="mt-1 w-full border rounded-md px-3 py-2" value={st.transporte.km_local_total} onChange={e=>set("transporte.km_local_total", Number(e.target.value||0))} />
-                </div>
-              </div>
+  <label className="text-sm">Km locales motorizados (ida + vuelta)</label>
+  <input
+    type="number"
+    min={0}
+    className="mt-1 w-full border rounded-md px-3 py-2"
+    // 👇 Si es 0 / null / undefined, mostramos el input vacío
+    value={
+      st.transporte.km_local_total === 0 ||
+      st.transporte.km_local_total === null ||
+      st.transporte.km_local_total === undefined
+        ? ""
+        : st.transporte.km_local_total
+    }
+    onChange={(e) => {
+      const raw = e.target.value;
+
+      // Si borra todo, lo tratamos como 0 (sin km locales)
+      if (raw === "") {
+        set("transporte.km_local_total", 0);
+        return;
+      }
+
+      let v = Number(raw);
+      if (Number.isNaN(v)) return;
+      if (v < 0) v = 0;
+
+      set("transporte.km_local_total", v);
+    }}
+  />
+  <p className="text-xs text-slate-500 mt-1">
+    Considera los traslados internos durante tu estadía (sumando ida y vuelta).
+  </p>
+  {/* 👇 Nota sólo si elige bicicleta o a pie */}
+          {(st.transporte.uso_local.includes("Bicicleta") ||
+            st.transporte.uso_local.includes("A pie")) && (
+            <p className="mt-1 text-xs text-emerald-700">
+              Cuando te desplazas a pie o en bicicleta consideramos una huella casi nula
+              en transporte local, por eso estos modos no aumentarán tu resultado.
+            </p>
+          )}
+</div>
+</div>
             </CardContent>
           </Card>
         )}
