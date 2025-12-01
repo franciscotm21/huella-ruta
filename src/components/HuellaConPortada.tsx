@@ -232,7 +232,7 @@ export default function HuellaConPortada(){
               <motion.h1 initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="text-4xl sm:text-5xl md:text-6xl font-extrabold">
                 Mide tu huella. <span className="text-emerald-300">Actúa</span>. Disfruta la ruta.
               </motion.h1>
-              <p className="mt-5 text-lg text-white/90">Calcula tu huella de carbono para tu visita a la Reserva de Biósfera "Corredor Biológico Nevados de Chillán – Laguna del Laja"  y recibe acciones de compensación para compensar tu huella.</p>
+              <p className="mt-5 text-lg text-white/90">Calcula tu huella de carbono para tu visita a la Reserva de Biósfera "Corredor Biológico Nevados de Chillán – Laguna del Laja"  y recibe acciones para reducir y compensar tu impacto.</p>
               <motion.button onClick={()=>{
     // 🔹 Evento GA: el usuario inicia la calculadora solo agrega un "}" al final de setStart
     trackEvent("calculator_start", {
@@ -265,6 +265,7 @@ function Calculadora(){
   const [accionActiva, setAccionActiva] = useState<{ categoria: string; index: number } | null>(
     null
   );
+
 
   // Slider de compromiso
   const [compromiso, setCompromiso] = useState(70);
@@ -1408,6 +1409,8 @@ function CenterText({ viewBox, totalKg }: any) {
         detallesCategoria[accionActiva.categoria]
       : undefined;
 
+      const [introIdentificacionVisible, setIntroIdentificacionVisible] = useState(true);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white text-slate-800">
       <header className="max-w-6xl mx-auto px-4 py-6">
@@ -1479,6 +1482,87 @@ function CenterText({ viewBox, totalKg }: any) {
         <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden mb-6">
           <div className="h-full bg-emerald-600" style={{width:`${Math.max(5, progreso)}%`}} />
         </div>
+
+{/* MODAL INTRO IDENTIFICACIÓN */}
+<AnimatePresence>
+  {paso === 0 && introIdentificacionVisible && (
+    <motion.div
+      key="intro-identificacion"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-30 bg-black/40 flex items-start justify-center px-4 pt-[120px]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setIntroIdentificacionVisible(false);
+      }}
+    >
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        className="relative w-full max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 py-5 shadow-lg"
+      >
+        {/* Botón X */}
+        <button
+          type="button"
+          onClick={() => setIntroIdentificacionVisible(false)}
+          className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"
+        >
+          ×
+        </button>
+
+        {/* Contenido */}
+        <div className="flex flex-col gap-3">
+          {/* Icono + título centrado */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
+              🧭
+            </div>
+            <h2 className="text-lg sm:text-xl font-semibold text-emerald-900 text-center">
+              ¡Cuéntanos tu viaje!
+            </h2>
+          </div>
+
+          <p className="mt-1 text-xs sm:text-sm text-emerald-900/90 text-center sm:text-left">
+            Esta calculadora está pensada para quienes{" "}
+            <span className="font-semibold">están planificando</span> una visita a los
+            atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
+            <span className="font-semibold">ya viajaron</span> y quieren saber qué huella dejaron.
+          </p>
+
+          <ul className="mt-1 space-y-1.5 text-xs text-emerald-900/90">
+            <li>• Desde dónde viajas (ciudad o punto de origen).</li>
+            <li>• A qué sector del corredor vas (destino principal).</li>
+            <li>
+              • La distancia aproximada de ida (si no la conoces, usamos valores de referencia).
+            </li>
+          </ul>
+
+          <p className="mt-2 text-xs text-emerald-900/90">
+            Con esto estimamos las emisiones de{" "}
+            <span className="font-semibold">transporte ida y vuelta</span> y luego te mostraremos{" "}
+            <span className="font-semibold">acciones concretas</span> para reducir o compensar tu
+            huella.
+          </p>
+
+          <div className="mt-3 flex flex-wrap justify-between items-center gap-2">
+            <p className="text-[11px] text-emerald-900/80">
+              ✨ Mientras más preciso seas, más realista será tu resultado.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIntroIdentificacionVisible(false)}
+              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
+            >
+              Entendido, completar mis datos
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
 
        {paso===0 && (
   <Card>
