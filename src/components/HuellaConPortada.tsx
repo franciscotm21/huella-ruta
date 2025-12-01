@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Label } from "recharts";
 import {motion,AnimatePresence,useMotionValue,useTransform,animate,} from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck, Plug, PillBottle, X, Star} from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { trackEvent } from "@/lib/analytics"; // ajusta la ruta según tu estructura
+
 
 
 // ===== UTIL =====
@@ -179,10 +180,10 @@ const DIST_IDA_KM: Record<string, Record<string, number>> = {
 
 
 // Factores (ejemplos)
-const F_TRANSP = { auto_gasolina:0.18, auto_diesel:0.20, auto_hibrido:0.11, kwh_100km:17, grid:0.35, bus:0.06, avion:0.15, van_local:0.10, moto_nieve_h:18.0, snowcat_h:4.0, motocicleta_verano:0.12, cuadrimoto_verano:0.24 }
+const F_TRANSP = { auto_gasolina:0.18, auto_diesel:0.20, auto_hibrido:0.11, kwh_100km:17, grid:0.35, bus:0.06, avion:0.15, auto_local: 0.18, van_local:0.10, moto_nieve_h:18.0, snowcat_h:4.0, motocicleta_verano:0.12,  moto_deporte: 0.20, cuatrimoto_verano:0.24, otro:0.10 };
 const F_ALOJA = { hotel:9.0, hostal:6.0, cabana:5.5, camping:2.0, cal:{lena:3.0, gas:2.0, diesel:3.5, elec:1.5, ninguna:0.5} };
 const F_ALIM = { locales:2.5, cadenas:3.2, auto:1.6, bonus_local:-0.6 };
-const F_ACT = { ski:2.5, trekking:0.3, cabalgata:1.0, mtb:0.6, raquetas:0.4, canopy:0.8, moto:8.0, otro:0.8 };
+const F_ACT = { ski:2.5, trekking:0.3, cabalgata:1.0, mtb:0.6, raquetas:0.4, canopy:0.8, moto:8.0, moto_deporte: 0.20, otro:0.10 };
 const F_RES = { manejo:{sep:0.2, comunes:0.6, regreso:0.1, otro:0.5}, agua:{prom:0.5, bajo:0.2, alto:0.9} };
 
 const ESTADO_INICIAL = {
@@ -328,11 +329,13 @@ function Calculadora(){
 
     let localKg = 0;
     const km_local = st.transporte.km_local_total;
+    if (st.transporte.uso_local.includes("Auto/camioneta propia")) {localKg += km_local * F_TRANSP.auto_local;}
     if (st.transporte.uso_local.includes("Traslado en van/bus")) localKg += km_local*F_TRANSP.van_local;
     if (st.transporte.uso_local.includes("Moto de nieve")) localKg += 2*F_TRANSP.moto_nieve_h;
     if (st.transporte.uso_local.includes("Snowcat/andarivel")) localKg += 2*F_TRANSP.snowcat_h;
     if (st.transporte.uso_local.includes("Motocicleta (verano)")) localKg += km_local * F_TRANSP.motocicleta_verano;
-    if (st.transporte.uso_local.includes("Cuatrimoto (verano)")) localKg += km_local * F_TRANSP.cuadrimoto_verano;
+    if (st.transporte.uso_local.includes("Cuatrimoto (verano)")) localKg += km_local * F_TRANSP.cuatrimoto_verano;
+    if (st.transporte.uso_local.includes("Otro")) localKg += km_local * F_TRANSP.otro;
 
 
     const noches = st.alojamiento.noches;
@@ -357,12 +360,15 @@ if (st.alimentacion.donde === "Cadenas externas") alim = F_ALIM.cadenas;
 if (st.alimentacion.donde === "Autoabastecido") alim = F_ALIM.auto;
 
 // Factor según cantidad de carne roja
-let factorDieta = 1;
+let factorDieta = 1.4;
 if (st.alimentacion.tipo_dieta === "Alta en carne roja (vacuno casi todos los días)") {
-  factorDieta = 1.4;   // más huella
+  factorDieta = 1.8;   // más huella
 }
 if (st.alimentacion.tipo_dieta === "Mayormente sin carne roja / vegetariana") {
-  factorDieta = 0.7;   // menos huella
+  factorDieta = 1;   // menos huella
+}
+if (st.alimentacion.tipo_dieta === "Vegetariana/vegana (sin carne)") {
+  factorDieta = 0.8; // aún menor huella diaria
 }
 // "Mixta" queda con factor 1
 
@@ -374,7 +380,7 @@ if (st.alimentacion.productos_locales) {
 if (alimTotal < 0) alimTotal = 0;
 
     const H = st.actividades.horas as Record<string,number>;
-    const act = (H["Ski/Snowboard"]||0)*F_ACT.ski + (H["Trekking"]||0)*F_ACT.trekking + (H["Cabalgata"]||0)*F_ACT.cabalgata + (H["MTB"]||0)*F_ACT.mtb + (H["Raquetas"]||0)*F_ACT.raquetas + (H["Canopy"]||0)*F_ACT.canopy + (H["Moto de nieve"]||0)*F_ACT.moto + (H["Otro"]||0)*F_ACT.otro;
+    const act = (H["Ski/Snowboard"]||0)*F_ACT.ski + (H["Trekking"]||0)*F_ACT.trekking + (H["Cabalgata"]||0)*F_ACT.cabalgata + (H["Ciclismo/MTB"]||0)*F_ACT.mtb + (H["Raquetas"]||0)*F_ACT.raquetas + (H["Canopy"]||0)*F_ACT.canopy + (H["Moto de nieve"]||0)*F_ACT.moto + (H["Motocross/enduro"]||0)*F_ACT.moto_deporte + (H["Otro"]||0)*F_ACT.otro;
 
     let res = F_RES.manejo.sep;
 if (st.residuosagua.manejo === "Basureros comunes") res = F_RES.manejo.comunes;
@@ -470,6 +476,25 @@ const arbolesEquivalentes = totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPor
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href=url; a.download="resultado-huella-nevados.json"; a.click(); URL.revokeObjectURL(url);
   };
+  
+  // Confetti para logro 100%
+const [showConfetti, setShowConfetti] = useState(false);
+const [confettiBurstId, setConfettiBurstId] = useState(0);
+
+useEffect(() => {
+  if (compromiso === 100) {
+    setShowConfetti(true);
+    setConfettiBurstId((id) => id + 1); // fuerza un nuevo "burst"
+    const timeout = setTimeout(() => {
+      setShowConfetti(false);
+    }, 2200); // dura aprox 2.2s
+
+    return () => clearTimeout(timeout);
+  }
+}, [compromiso]);
+
+const CONFETTI_COLORS = ["#10b981", "#facc15", "#38bdf8", "#f97316", "#ec4899"];
+const CONFETTI_PIECES = 70;
 
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
     "Transporte ida/regreso": [
@@ -1684,7 +1709,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div className="sm:col-span-2">
                   <label className="text-sm">Transporte local utilizado</label>
                   <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    {["A pie","Bicicleta","Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
+                    {["A pie/bicicleta","Auto/camioneta propia","Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
                       <label key={opt} className="flex items-center gap-2">
                         <input type="checkbox" checked={st.transporte.uso_local.includes(opt)} onChange={e=>{
                           const setSel = new Set(st.transporte.uso_local);
@@ -1697,7 +1722,7 @@ function CenterText({ viewBox, totalKg }: any) {
                   </div>
                 </div>
                 <div className="sm:col-span-2">
-  <label className="text-sm">Km locales motorizados (ida + vuelta)</label>
+  <label className="text-sm">Km de transporte local recorridos (ida + vuelta)</label>
   <input
     type="number"
     min={0}
@@ -1730,13 +1755,22 @@ function CenterText({ viewBox, totalKg }: any) {
     Considera los traslados internos durante tu estadía (sumando ida y vuelta).
   </p>
   {/* 👇 Nota sólo si elige bicicleta o a pie */}
-          {(st.transporte.uso_local.includes("Bicicleta") ||
+          {(st.transporte.uso_local.includes("A pie/bicicleta") ||
             st.transporte.uso_local.includes("A pie")) && (
             <p className="mt-1 text-xs text-emerald-700">
-              Cuando te desplazas a pie o en bicicleta consideramos una huella casi nula
-              en transporte local, por eso estos modos no aumentarán tu resultado.
+             ¡Excelente elección! Al moverte a pie o en bicicleta tu huella local es prácticamente cero, así que estos modos no suman CO₂ a tu resultado.
             </p>
           )}
+        {/* Nota si selecciona "Otro" */}
+  {st.transporte.uso_local.includes("Otro") && (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+      <p className="mt-1">
+        Para este caso utilizaremos un factor de emisión promedio de los
+        medios motorizados disponibles, de modo de representar tu huella
+        sin subestimarla.
+      </p>
+    </div>
+  )}
 </div>
 </div>
             </CardContent>
@@ -1765,7 +1799,7 @@ function CenterText({ viewBox, totalKg }: any) {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">Compartido (personas totales)</label><select className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.personas_total}
+                  <label className="text-sm">Huéspedes (personas totales)</label><select className="mt-1 w-full border rounded-md px-3 py-2" value={st.alojamiento.personas_total}
                   onChange={e => set("alojamiento.personas_total", Number(e.target.value))}> {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (<option key={n} value={n}>{n}</option>))}</select>
                   </div>
                   </div>
@@ -1779,7 +1813,7 @@ function CenterText({ viewBox, totalKg }: any) {
     <CardContent>
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm">¿Dónde consumiste la mayoría?</label>
+          <label className="text-sm">¿Dónde realizaste la mayor parte de tus comidas?</label>
           <select
             className="mt-1 w-full border rounded-md px-3 py-2"
             value={st.alimentacion.donde}
@@ -1790,15 +1824,15 @@ function CenterText({ viewBox, totalKg }: any) {
             ))}
           </select>
         </div>
-
         <div className="flex items-center gap-2 mt-7">
-          <input
-            type="checkbox"
-            checked={st.alimentacion.productos_locales}
-            onChange={e => set("alimentacion.productos_locales", e.target.checked)}
-          />
-          <span className="text-sm">¿Principalmente productos locales?</span>
-        </div>
+  <span className="text-sm">¿Fueron principalmente productos locales?</span>
+  <input
+    type="checkbox"
+    checked={st.alimentacion.productos_locales}
+    onChange={e => set("alimentacion.productos_locales", e.target.checked)}
+  />
+</div>
+
 
         <div className="sm:col-span-2">
           <label className="text-sm">Tipo de alimentación durante el viaje</label>
@@ -1816,6 +1850,9 @@ function CenterText({ viewBox, totalKg }: any) {
             <option value="Mayormente sin carne roja / vegetariana">
               Mayormente sin carne roja / vegetariana
             </option>
+             <option value="Vegetariana/vegana (sin carne)">
+             Vegetariana/vegana (sin carne)
+             </option>
           </select>
           <p className="text-xs text-slate-500 mt-1">
             La carne roja (vacuno) tiene una huella de carbono mucho mayor que otras opciones.
@@ -1837,7 +1874,7 @@ function CenterText({ viewBox, totalKg }: any) {
           />
            <CardContent>
             <div className="grid sm:grid-cols-2 gap-4"> {/* Checkboxes de actividades */}
-               <div className="sm:col-span-2 grid grid-cols-2 gap-3 text-sm"> {["Ski/Snowboard","Trekking","Cabalgata","MTB","Raquetas","Canopy","Moto de nieve","Otro",
+               <div className="sm:col-span-2 grid grid-cols-2 gap-3 text-sm"> {["Ski/Snowboard","Trekking","Cabalgata","Ciclismo/MTB","Raquetas","Canopy","Moto de nieve","Motocross/enduro","Otro",
 
                ].map((act) => ( <label key={act} className="flex items-center gap-2">
                  <input type="checkbox" checked={st.actividades.seleccion.includes(act)} 
@@ -1894,6 +1931,17 @@ function CenterText({ viewBox, totalKg }: any) {
             </div>
           );
         })}
+         {/* Nota si selecciona "Otro" */}
+        {st.actividades.seleccion.includes("Otro") && (
+          <div className="sm:col-span-2 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="font-semibold">¿Incluiste una actividad distinta?</p>
+            <p className="mt-1">
+              Para &quot;Otro&quot; utilizaremos un factor de emisión promedio
+              basado en actividades de intensidad similar, de modo de
+              representar tu huella sin subestimarla.
+            </p>
+          </div>
+        )}
       </div>
     </CardContent>
   </Card>
@@ -1913,7 +1961,7 @@ function CenterText({ viewBox, totalKg }: any) {
                 <div>
                   <label className="text-sm">Consumo de agua por día</label>
                   <select className="mt-1 w-full border rounded-md px-3 py-2" value={st.residuosagua.agua} onChange={e=>set("residuosagua.agua", e.target.value)}>
-                    {["Promedio (no sé)","Bajo","Alto"].map(x=>(<option key={x} value={x}>{x}</option>))}
+                    {["Promedio (estimado)","Bajo","Alto"].map(x=>(<option key={x} value={x}>{x}</option>))}
                   </select>
                 </div>
                 <div className="sm:col-span-2">
@@ -2349,6 +2397,36 @@ function CenterText({ viewBox, totalKg }: any) {
               exit={{ y: 40, opacity: 0 }}
               className="relative max-w-2xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white p-6 shadow-2xl"
             >
+               {/* CONFETTI SOBRE TODA LA TARJETA */}
+  {showConfetti && (
+    <div className="pointer-events-none absolute inset-0 z-30">
+      {Array.from({ length: CONFETTI_PIECES }).map((_, i) => {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 200 + Math.random() * 200; // más grande para cubrir toda la tarjeta
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
+        const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+        const duration = 0.9 + Math.random() * 0.6;
+
+        return (
+          <motion.span
+            key={`${confettiBurstId}-${i}`}
+            className="absolute left-1/2 top-1/2 h-1.5 w-3 rounded-[3px]"
+            style={{ backgroundColor: color }}
+            initial={{ opacity: 0, scale: 0, x: 0, y: 0, rotate: 0 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              x,
+              y,
+              rotate: Math.random() * 360,
+            }}
+            transition={{ duration, ease: "easeOut" }}
+          />
+        );
+      })}
+    </div>
+  )}
               <button
                 type="button"
                 onClick={() => setAccionActiva(null)}
@@ -2442,11 +2520,11 @@ function CenterText({ viewBox, totalKg }: any) {
                 </div>
                 
                 {/* Slider de compromiso */}
-                <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3">
-                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2">
-                  Tu nivel de compromiso con esta acción
-                  </p>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
+                <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 relative overflow-hidden">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 mb-2 text-center">
+                    ¿Te comprometes a aplicar esta acción en tu próxima visita?
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3">
                     <div className="flex-1">
                       <input
                       type="range"
@@ -2488,18 +2566,16 @@ function CenterText({ viewBox, totalKg }: any) {
     {compromisoLabel}
   </p>
 </div>
+             <div className="mt-3 flex flex-col items-center gap-2">
+  <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-800 gap-2">
+    <span className="font-semibold">Tip:</span>
+    <span>
+      Toma una captura de esta pantalla y guárdala junto a tus planes de viaje.
+    </span>
+  </div>
+  
+</div>
 
-                <div className="mt-3 flex flex-wrap gap-2 items-center">
-                  <span className="text-xs text-slate-500">
-                    ¿Te comprometes a aplicar esta acción en tu próxima visita?
-                  </span>
-                  <div className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-800 gap-2">
-                    <span className="font-semibold">Tip:</span>
-                    <span>
-                      Toma una captura de esta pantalla y guárdala junto a tus planes de viaje.
-                    </span>
-                  </div>
-                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -2507,4 +2583,5 @@ function CenterText({ viewBox, totalKg }: any) {
       </AnimatePresence>
     </div>
   );
+  
 }
