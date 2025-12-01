@@ -1518,19 +1518,20 @@ function CenterText({ viewBox, totalKg }: any) {
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
               🧭
             </div>
-            <h2 className="text-lg sm:text-xl font-semibold text-emerald-900 text-center">
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 text-center">
               ¡Cuéntanos tu viaje!
             </h2>
           </div>
 
-          <p className="mt-1 text-xs sm:text-sm text-emerald-900/90 text-center sm:text-left">
+          {/* Texto bajo el título (más grande) */}
+          <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-center sm:text-left">
             Esta calculadora está pensada para quienes{" "}
             <span className="font-semibold">están planificando</span> una visita a los
             atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
             <span className="font-semibold">ya viajaron</span> y quieren saber qué huella dejaron.
           </p>
 
-          <ul className="mt-1 space-y-1.5 text-xs text-emerald-900/90">
+          <ul className="mt-2 space-y-1.5 text-sm sm:text-base text-emerald-900/90">
             <li>• Desde dónde viajas (ciudad o punto de origen).</li>
             <li>• A qué sector del corredor vas (destino principal).</li>
             <li>
@@ -1538,24 +1539,28 @@ function CenterText({ viewBox, totalKg }: any) {
             </li>
           </ul>
 
-          <p className="mt-2 text-xs text-emerald-900/90">
+          <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90">
             Con esto estimamos las emisiones de{" "}
-            <span className="font-semibold">transporte ida y vuelta</span> y luego te mostraremos{" "}
+            <span className="font-semibold">transporte ida y vuelta,</span> continuando del mismo
+            modo para los siguientes pasos y luego te mostraremos{" "}
             <span className="font-semibold">acciones concretas</span> para reducir o compensar tu
             huella.
           </p>
 
-          <div className="mt-3 flex flex-wrap justify-between items-center gap-2">
-            <p className="text-[11px] text-emerald-900/80">
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
               ✨ Mientras más preciso seas, más realista será tu resultado.
             </p>
-            <button
+
+            <motion.button
               type="button"
               onClick={() => setIntroIdentificacionVisible(false)}
-              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-emerald-700"
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md hover:bg-emerald-700"
             >
               Entendido, completar mis datos
-            </button>
+            </motion.button>
           </div>
         </div>
       </motion.div>
