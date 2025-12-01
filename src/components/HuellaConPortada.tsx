@@ -1049,7 +1049,13 @@ doc.text(
 
 yAcc += 18;
 
-const lista = acciones[topCat] || [];
+// Acciones que se mostrarán en el PDF
+const baseLista = acciones[topCat] || [];
+const lista =
+  topCat === "Transporte ida/regreso"
+    ? baseLista.slice(0, 3) // solo las 3 primeras
+    : baseLista;
+
 
 if (!lista.length) {
   doc.setFont("helvetica", "normal");
