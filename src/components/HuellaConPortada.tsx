@@ -554,7 +554,7 @@ useEffect(() => {
   }, [st.transporte.km_local_por_medio]);
 
 const CONFETTI_COLORS = ["#10b981", "#facc15", "#38bdf8", "#f97316", "#ec4899"];
-const CONFETTI_PIECES = 70;
+const CONFETTI_PIECES = 100;
 
 const ACCIONES_SUGERIDAS: Array<{
   id: string;
@@ -1059,9 +1059,23 @@ const exportarPDF = async () => {
   doc.setFillColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
   doc.rect(0, 0, W, 90, "F");
 
+  //  Logo izquierdo
   try {
     const logo = await fileToDataURL("/logo.png");
     if (logo) doc.addImage(logo, "PNG", 30, 18, 80, 55);
+  } catch {}
+
+  //  Logo derecho (mismo tamaño, pegado al margen derecho)
+  try {
+    const logoRight = await fileToDataURL("/logo-gore-nuble.png"); // ← cambia al nombre de tu archivo
+    if (logoRight) {
+      const logoWidth = 80;
+      const logoHeight = 55;
+      const marginRight = 30;
+      const xRight = W - marginRight - logoWidth;
+
+      doc.addImage(logoRight, "PNG", xRight, 18, logoWidth, logoHeight);
+    }
   } catch {}
 
   doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
@@ -1251,58 +1265,133 @@ if (!lista.length) {
 }
 
     // =====================================================
-  // BLOQUE COMPACTO: RECUERDA PARA TU PRÓXIMA VISITA
+  // BLOQUE: RECUERDA PARA TU PRÓXIMA VISITA – TARJETAS ESTILO WEB
   // =====================================================
-  let yRec = yAcc + 22; // más cerca de las acciones
+  // Mucha más separación respecto de las acciones recomendadas
+  let yRec = H - 200; 
 
-  // Altura estimada del bloque
-  const recHeight = 140;
+  // Altura estimada SOLO para control (la hacemos pequeña para que no suba el bloque)
+  const recHeight = 120;
 
-  // Si no alcanza, lo subimos un poco para que quepa en esta página
-  if (yRec + recHeight > H - 60) {
-    yRec = H - 60 - recHeight;
-  }
 
-  // Título (más pequeño)
+  // Título
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
   doc.text("Recuerda para tu próxima visita:", 30, yRec);
 
-  // Parámetros de los círculos (más pequeños y compactos)
-  const centerY = yRec + 70;
-const radius = 44;                // un pelín más chico para dar aire
-const diameter = radius * 2;
-const imgSize = diameter - 10;
-const gapX = 170;                 // MÁS separación entre columnas
-const firstCenterX = W / 2 - gapX;
+  // Configuración de tarjetas
+  const cardsTop = yRec + 22;
+  const cardsGap = 16;
+  const cardsTotalWidth = W - 60;
+  const cardWidth = (cardsTotalWidth - 2 * cardsGap) / 3;
+  const cardHeight = 140;  // un poco más bajas
+  const baseCardX = 30;
 
+  type CardRecordatorio = {
+    categoria: string;
+    label: string;
+    imgPath: string;
+  };
 
-  const recordatorios = [
+  const recordatorios: CardRecordatorio[] = [
     {
-      cx: firstCenterX,
-      imgPath: "/pdf-arbol.png",        // asegúrate de que exista en /public
-      label: "Planta un árbol nativo",
+      categoria: "COMPENSACIÓN",
+      label: "PLANTA UN ÁRBOL NATIVO",
+      imgPath: "/arau-pdf.png",
     },
     {
-      cx: firstCenterX + gapX,
-      imgPath: "/pdf-consumo.png",
-      label: "Consume de forma responsable",
+      categoria: "RESIDUOS Y AGUA",
+      label: "ALIMÉNTATE DE FORMA RESPONSABLE",
+      imgPath: "/resp-pdf.png",
     },
     {
-      cx: firstCenterX + gapX * 2,
-      imgPath: "/pdf-transporte.png",
-      label: "Elige transportes limpios",
+      categoria: "ECONOMÍA LOCAL",
+      label: "ELIGE TRANSPORTES LIMPIOS",
+      imgPath: "/limpio-pdf.png",
     },
   ];
 
-   for (const item of recordatorios) {
-    const { cx, imgPath, label } = item;
-    const cy = centerY;
+  for (let i = 0; i < recordatorios.length; i++) {
+    const item = recordatorios[i];
 
-    // Imagen centrada
+    const cardX = baseCardX + i * (cardWidth + cardsGap);
+    const cardY = cardsTop;
+
+    // Fondo base blanco y esquinas redondeadas
+    doc.setFillColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
+    doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 12, 12, "F");
+
+    // ===== Gradiente inverso, fino, "contenido" dentro (para que se vean las esquinas redondas) =====
+    const steps = 30;
+    const inset = 3; // margen interno para no cubrir las esquinas
+    const gradX = cardX + inset;
+    const gradW = cardWidth - inset * 2;
+    const gradY = cardY + inset;
+    const gradH = cardHeight - inset * 2;
+
+    // color muy claro al fondo (mezcla de blanco y emeraldLight)
+    const target = {
+      r: (COLOR.white.r * 0.6 + COLOR.emeraldLight.r * 0.4),
+      g: (COLOR.white.g * 0.6 + COLOR.emeraldLight.g * 0.4),
+      b: (COLOR.white.b * 0.6 + COLOR.emeraldLight.b * 0.4),
+    };
+
+    for (let s = 0; s < steps; s++) {
+      const ratio = s / (steps - 1); // 0 → 1
+
+      const r = COLOR.white.r + (target.r - COLOR.white.r) * ratio;
+      const g = COLOR.white.g + (target.g - COLOR.white.g) * ratio;
+      const b = COLOR.white.b + (target.b - COLOR.white.b) * ratio;
+
+      const stripeH = gradH / steps;
+      const stripeY = gradY + stripeH * s;
+
+      doc.setFillColor(r, g, b);
+      doc.rect(gradX, stripeY, gradW, stripeH + 0.6, "F");
+    }
+
+    // Borde uniforme para las 3 tarjetas
+    doc.setDrawColor(209, 250, 229);
+    doc.setLineWidth(1);
+    doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 12, 12, "S");
+
+    // ===== “Etiqueta” superior =====
+    const pillX = cardX + 12;
+    const pillY = cardY + 10;
+    const pillW = cardWidth - 24;
+    const pillH = 20;
+
+    doc.setFillColor(
+      COLOR.emeraldDark.r,
+      COLOR.emeraldDark.g,
+      COLOR.emeraldDark.b
+    );
+    doc.roundedRect(pillX, pillY, pillW, pillH, 10, 10, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
+    doc.text(item.categoria, pillX + pillW / 2, pillY + 13, {
+      align: "center",
+    } as any);
+
+    // ===== Icono dentro de círculo =====
+    const cx = cardX + cardWidth / 2;
+    const cy = pillY + pillH + 30;
+    const iconRadius = 20;
+    const imgSize = iconRadius * 2 - 6;
+
+    doc.setLineWidth(1.4);
+    doc.setDrawColor(
+      COLOR.emeraldDark.r,
+      COLOR.emeraldDark.g,
+      COLOR.emeraldDark.b
+    );
+    doc.circle(cx, cy, iconRadius, "S");
+
     try {
-      const dataUrl = await fileToDataURL(imgPath);
+      const dataUrl = await fileToDataURL(item.imgPath);
       if (dataUrl) {
         const imgX = cx - imgSize / 2;
         const imgY = cy - imgSize / 2;
@@ -1310,19 +1399,24 @@ const firstCenterX = W / 2 - gapX;
       }
     } catch {}
 
-    // Círculo
-    doc.setLineWidth(1.6);
-    doc.setDrawColor(COLOR.emeraldDark.r, COLOR.emeraldDark.g, COLOR.emeraldDark.b);
-    doc.circle(cx, cy, radius, "S");
-
-    // 🔽 Texto un poco más separado
+    // ===== Texto del compromiso (mayúsculas + centrado) =====
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.setTextColor(COLOR.slateDark.r, COLOR.slateDark.g, COLOR.slateDark.b);
+    doc.setTextColor(
+      COLOR.slateDark.r,
+      COLOR.slateDark.g,
+      COLOR.slateDark.b
+    );
 
-    const textY = cy + radius + 26;   // antes: + 18
-    doc.text(label, cx, textY, { align: "center" } as any);
+    const labelMaxWidth = cardWidth - 24;
+    const wrappedLabel = doc.splitTextToSize(item.label, labelMaxWidth);
+    const textY = cy + iconRadius + 20;
+
+    doc.text(wrappedLabel, cardX + cardWidth / 2, textY, {
+      align: "center",
+    } as any);
   }
+
 
 
 
