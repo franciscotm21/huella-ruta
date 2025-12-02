@@ -186,9 +186,10 @@ const F_ALIM = { locales:2.5, cadenas:3.2, auto:1.6, bonus_local:-0.6 };
 const F_ACT = { ski:2.5, trekking:0.3, cabalgata:1.0, mtb:0.6, raquetas:0.4, canopy:0.8, moto:8.0, moto_deporte: 0.20, otro:0.10 };
 const F_RES = { manejo:{sep:0.2, comunes:0.6, regreso:0.1, otro:0.5}, agua:{prom:0.5, bajo:0.2, alto:0.9} };
 
+
 const ESTADO_INICIAL = {
   id: { origen:"Chillán", destino:"Pinto- Nevados de Chillán", km_personalizado:0 },
-  transporte: { medio:"Auto gasolina", pasajeros_auto:1, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_total:20 },
+  transporte: { medio:"Auto gasolina", pasajeros_auto:1, consumo_e_kwh_100:17, uso_local:[] as string[], km_local_por_medio: {} as Record<string, number>},
   alojamiento: { tipo:"Cabaña", noches:1, calefaccion:"Leña", personas_total:1 },
   alimentacion: { donde: "Restaurantes locales", productos_locales: true, tipo_dieta: "Mixta (algo de carne roja y algo sin carne)",},
   actividades: { seleccion:[] as string[], horas: {} as Record<string, number> },
@@ -196,6 +197,19 @@ const ESTADO_INICIAL = {
 
 };
 
+const TRANSP_LOCAL_CONFIG: Record<
+  string,
+  { tipo: "km" | "horas"; esCero?: boolean }
+> = {
+  "A pie/bicicleta": { tipo: "km", esCero: true }, // huella ≈ 0
+  "Auto/camioneta propia": { tipo: "km" },
+  "Traslado en van/bus": { tipo: "km" },
+  "Moto de nieve": { tipo: "horas" },
+  "Snowcat/andarivel": { tipo: "horas" },
+  "Motocicleta (verano)": { tipo: "km" },
+  "Cuatrimoto (verano)": { tipo: "km" },
+  "Otro": { tipo: "km" },
+};
 
 
 // Reusable card
@@ -327,15 +341,46 @@ function Calculadora(){
       default: llegarKg = kmTotal*0.15;
     }
 
-    let localKg = 0;
-    const km_local = st.transporte.km_local_total;
-    if (st.transporte.uso_local.includes("Auto/camioneta propia")) {localKg += km_local * F_TRANSP.auto_local;}
-    if (st.transporte.uso_local.includes("Traslado en van/bus")) localKg += km_local*F_TRANSP.van_local;
-    if (st.transporte.uso_local.includes("Moto de nieve")) localKg += 2*F_TRANSP.moto_nieve_h;
-    if (st.transporte.uso_local.includes("Snowcat/andarivel")) localKg += 2*F_TRANSP.snowcat_h;
-    if (st.transporte.uso_local.includes("Motocicleta (verano)")) localKg += km_local * F_TRANSP.motocicleta_verano;
-    if (st.transporte.uso_local.includes("Cuatrimoto (verano)")) localKg += km_local * F_TRANSP.cuatrimoto_verano;
-    if (st.transporte.uso_local.includes("Otro")) localKg += km_local * F_TRANSP.otro;
+        let localKg = 0;
+
+    // Usamos km/horas específicos según cada medio local seleccionado
+    const kmPorMedio = st.transporte.km_local_por_medio || {};
+
+    for (const medio of st.transporte.uso_local) {
+      const cfg = TRANSP_LOCAL_CONFIG[medio];
+      const valor = kmPorMedio[medio] ?? 0;
+
+      if (!cfg || !valor || valor <= 0) continue;
+
+      switch (medio) {
+        case "Auto/camioneta propia":
+          localKg += valor * F_TRANSP.auto_local;
+          break;
+        case "Traslado en van/bus":
+          localKg += valor * F_TRANSP.van_local;
+          break;
+        case "Motocicleta (verano)":
+          localKg += valor * F_TRANSP.motocicleta_verano;
+          break;
+        case "Cuatrimoto (verano)":
+          localKg += valor * F_TRANSP.cuatrimoto_verano;
+          break;
+        case "Otro":
+          localKg += valor * F_TRANSP.otro;
+          break;
+        case "Moto de nieve":
+          // valor se interpreta como HORAS de uso
+          localKg += valor * F_TRANSP.moto_nieve_h;
+          break;
+        case "Snowcat/andarivel":
+          // valor se interpreta como HORAS de uso
+          localKg += valor * F_TRANSP.snowcat_h;
+          break;
+        // "A pie/bicicleta" y otros marcados como esCero no suman CO2
+      }
+    }
+
+ 
 
 
     const noches = st.alojamiento.noches;
@@ -492,6 +537,21 @@ useEffect(() => {
     return () => clearTimeout(timeout);
   }
 }, [compromiso]);
+
+ const kmMotorizadosLocales = React.useMemo(() => {
+    const mapa = st.transporte.km_local_por_medio || {};
+    let total = 0;
+
+    for (const [medio, valor] of Object.entries(mapa)) {
+      const cfg = TRANSP_LOCAL_CONFIG[medio];
+      if (!cfg || cfg.tipo !== "km" || cfg.esCero) continue;
+      if (typeof valor === "number" && valor > 0) {
+        total += valor;
+      }
+    }
+
+    return total;
+  }, [st.transporte.km_local_por_medio]);
 
 const CONFETTI_COLORS = ["#10b981", "#facc15", "#38bdf8", "#f97316", "#ec4899"];
 const CONFETTI_PIECES = 70;
@@ -1477,25 +1537,26 @@ function CenterText({ viewBox, totalKg }: any) {
 
 
 
-  {/* FILA 2: Indicadores ABAJO, horizontal */}
-    <div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start">
+{/* FILA 2: Indicadores ABAJO, horizontal */}
+<div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start md:pl-10 lg:pl-10">
+  {PASOS.map((s, i) => (
+    <div
+      key={s.key}
+      className={`px-4 py-2 rounded-full border ${
+        i === paso
+          ? "bg-emerald-600 text-white border-emerald-600"
+          : "bg-white text-slate-600 border-slate-200"
+      }`}
+    >
+      <span className="inline-flex items-center gap-2">
+        {s.icon}
+        {s.label}
+      </span>
+    </div>
+  ))}
+</div>
 
-    {PASOS.map((s, i) => (
-      <div
-        key={s.key}
-        className={`px-4 py-2 rounded-full border ${
-          i === paso
-            ? "bg-emerald-600 text-white border-emerald-600"
-            : "bg-white text-slate-600 border-slate-200"
-        }`}
-      >
-        <span className="inline-flex items-center gap-2">
-          {s.icon}
-          {s.label}
-        </span>
-      </div>
-    ))}
-  </div>
+
  
 </header>
 
@@ -1548,34 +1609,39 @@ function CenterText({ viewBox, totalKg }: any) {
             </h2>
           </div>
 
-          {/* Texto bajo el título (más grande) */}
-          <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-center sm:text-left">
-            Esta calculadora está pensada para quienes{" "}
-            <span className="font-semibold">están planificando</span> una visita a los
-            atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
-            <span className="font-semibold">ya viajaron</span> y quieren saber qué huella dejaron.
-          </p>
+           {/* Texto bajo el título */}
+  <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90">
+    Esta calculadora está pensada para quienes{" "}
+    <span className="font-semibold">están planificando</span> una visita a los
+    atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
+    <span className="font-semibold">ya viajaron</span> y quieren saber qué huella
+    dejaron.
+  </p>
 
-          <ul className="mt-2 space-y-1.5 text-sm sm:text-base text-emerald-900/90">
-            <li>• Desde dónde viajas (ciudad o punto de origen).</li>
-            <li>• A qué sector del corredor vas (destino principal).</li>
-            <li>
-              • La distancia aproximada de ida (si no la conoces, usamos valores de referencia).
-            </li>
-          </ul>
+  <p className="text-sm sm:text-base leading-relaxed text-emerald-900/90">
+    Comenzando con la categoría de{" "}
+    <span className="font-semibold">"Identificación"</span> en la cual te
+    preguntaremos:
+  </p>
 
-          <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90">
-            Con esto estimamos las emisiones de{" "}
-            <span className="font-semibold">transporte ida y vuelta,</span> continuando del mismo
-            modo para los siguientes pasos y luego te mostraremos{" "}
-            <span className="font-semibold">acciones concretas</span> para reducir o compensar tu
-            huella.
-          </p>
+  <ul className="mt-1.5 space-y-1.5 text-sm sm:text-base text-emerald-900/90">
+    <li>• Desde dónde viajas (ciudad o punto de origen).</li>
+    <li>• A qué sector del corredor vas (destino principal).</li>
+    <li>
+      • La distancia aproximada de ida (si no aparece tu punto de origen).
+    </li>
+  </ul>
 
-          <div className="mt-5 flex flex-col items-center gap-3">
-            <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
-              ✨ Mientras más preciso seas, más realista será tu resultado.
-            </p>
+  <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90">
+    Continuará del mismo modo para las siguientes categorías y luego te
+    mostraremos <span className="font-semibold">acciones concretas</span> para
+    reducir o compensar tu huella.
+  </p>
+
+  <div className="mt-2 flex flex-col items-center gap-3">
+    <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
+      ✨ Mientras más preciso seas, más realista será tu resultado ✨
+        </p>
 
             <motion.button
               type="button"
@@ -1637,7 +1703,7 @@ function CenterText({ viewBox, totalKg }: any) {
 
         <div className="sm:col-span-2">
           <label className="text-sm">
-            Distancia estimada ida (km) — personaliza si tu ciudad es lejana
+            Distancia estimada ida (km) — personaliza si tu ciudad no está en la lista
           </label>
           <input
             type="number"
@@ -1707,71 +1773,137 @@ function CenterText({ viewBox, totalKg }: any) {
                   </div>
                 )}
                 <div className="sm:col-span-2">
-                  <label className="text-sm">Transporte local utilizado</label>
-                  <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
-                    {["A pie/bicicleta","Auto/camioneta propia","Traslado en van/bus","Moto de nieve","Snowcat/andarivel","Motocicleta (verano)","Cuatrimoto (verano)","Otro"].map(opt=>(
-                      <label key={opt} className="flex items-center gap-2">
-                        <input type="checkbox" checked={st.transporte.uso_local.includes(opt)} onChange={e=>{
-                          const setSel = new Set(st.transporte.uso_local);
-                          e.target.checked ? setSel.add(opt) : setSel.delete(opt);
-                          set("transporte.uso_local", Array.from(setSel));
-                        }} />
-                        {opt}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div className="sm:col-span-2">
-  <label className="text-sm">Km de transporte local recorridos (ida + vuelta)</label>
-  <input
-    type="number"
-    min={0}
-    className="mt-1 w-full border rounded-md px-3 py-2"
-    // 👇 Si es 0 / null / undefined, mostramos el input vacío
-    value={
-      st.transporte.km_local_total === 0 ||
-      st.transporte.km_local_total === null ||
-      st.transporte.km_local_total === undefined
-        ? ""
-        : st.transporte.km_local_total
-    }
-    onChange={(e) => {
-      const raw = e.target.value;
+  <label className="text-sm">Transporte local utilizado</label>
+  <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
+    {[
+      "A pie/bicicleta",
+      "Auto/camioneta propia",
+      "Traslado en van/bus",
+      "Moto de nieve",
+      "Snowcat/andarivel",
+      "Motocicleta (verano)",
+      "Cuatrimoto (verano)",
+      "Otro",
+    ].map((opt) => (
+      <label key={opt} className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={st.transporte.uso_local.includes(opt)}
+          onChange={(e) => {
+            const setSel = new Set(st.transporte.uso_local);
+            const kmMap = { ...(st.transporte.km_local_por_medio || {}) };
 
-      // Si borra todo, lo tratamos como 0 (sin km locales)
-      if (raw === "") {
-        set("transporte.km_local_total", 0);
-        return;
-      }
+            if (e.target.checked) {
+              setSel.add(opt);
+            } else {
+              setSel.delete(opt);
+              delete kmMap[opt]; // limpiamos km/horas de medios desmarcados
+            }
 
-      let v = Number(raw);
-      if (Number.isNaN(v)) return;
-      if (v < 0) v = 0;
-
-      set("transporte.km_local_total", v);
-    }}
-  />
-  <p className="text-xs text-slate-500 mt-1">
-    Considera los traslados internos durante tu estadía (sumando ida y vuelta).
-  </p>
-  {/* 👇 Nota sólo si elige bicicleta o a pie */}
-          {(st.transporte.uso_local.includes("A pie/bicicleta") ||
-            st.transporte.uso_local.includes("A pie")) && (
-            <p className="mt-1 text-xs text-emerald-700">
-             ¡Excelente elección! Al moverte a pie o en bicicleta tu huella local es prácticamente cero, así que estos modos no suman CO₂ a tu resultado.
-            </p>
-          )}
-        {/* Nota si selecciona "Otro" */}
-  {st.transporte.uso_local.includes("Otro") && (
-    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-      <p className="mt-1">
-        Para este caso utilizaremos un factor de emisión promedio de los
-        medios motorizados disponibles, de modo de representar tu huella
-        sin subestimarla.
+            set("transporte.uso_local", Array.from(setSel));
+            set("transporte.km_local_por_medio", kmMap);
+          }}
+        />
+        {opt}
+      </label>
+    ))}
+  </div>
+</div>
+{/* Detalle por medio seleccionado */}
+<div className="sm:col-span-2">
+  {st.transporte.uso_local.length === 0 ? (
+    <p className="mt-1 text-xs text-slate-500">
+      Selecciona uno o más modos de transporte local y luego indica
+      cuántos kilómetros u horas usaste en cada uno.
+    </p>
+  ) : (
+    <>
+      <p className="mt-2 text-sm text-slate-700">
+        Detalla el uso de cada medio seleccionado:
       </p>
-    </div>
+
+      <div className="mt-2 grid sm:grid-cols-2 gap-4">
+        {st.transporte.uso_local
+          // 👇 aquí ignoramos explícitamente A pie/bici para no pedirle km/horas
+          .filter(
+            (medio) =>
+              medio !== "A pie/bicicleta" && medio !== "A pie"
+          )
+          .map((medio) => {
+            const cfg = TRANSP_LOCAL_CONFIG[medio];
+            const rawVal = st.transporte.km_local_por_medio?.[medio];
+            const valor = typeof rawVal === "number" ? rawVal : 0;
+
+            return (
+              <div key={medio}>
+                <label className="text-sm">
+                  {cfg?.tipo === "horas"
+                    ? `Horas de uso en ${medio}`
+                    : `Km recorridos en ${medio} (ida + vuelta)`}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full border rounded-md px-3 py-2"
+                  value={valor === 0 ? "" : valor}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const mapa = {
+                      ...(st.transporte.km_local_por_medio || {}),
+                    };
+
+                    if (raw === "") {
+                      delete mapa[medio];
+                    } else {
+                      let v = Number(raw);
+                      if (Number.isNaN(v) || v < 0) v = 0;
+                      mapa[medio] = v;
+                    }
+
+                    set("transporte.km_local_por_medio", mapa);
+                  }}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  {cfg?.tipo === "horas"
+                    ? "Ingresa el total de horas aproximadas que usaste este medio durante tu estadía."
+                    : "Considera los traslados internos durante tu estadía, sumando ida y vuelta."}
+                </p>
+
+                {medio === "Otro" && (
+                  <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                    Para este caso utilizaremos un factor de emisión promedio
+                    de los medios motorizados disponibles, de modo de
+                    representar tu huella sin subestimarla.
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </div>
+
+      {/* 🔹 Texto A pie/bicicleta: siempre debajo, a todo el ancho */}
+      {(st.transporte.uso_local.includes("A pie/bicicleta") ||
+        st.transporte.uso_local.includes("A pie")) && (
+        <p className="mt-1 text-xs text-emerald-700">
+          ¡Excelente elección! Al moverte a pie o en bicicleta tu huella local es
+          prácticamente cero, así que estos modos no suman CO₂ a tu resultado.
+        </p>
+      )}
+
+      {kmMotorizadosLocales > 0 && (
+        <p className="mt-2 text-xs text-slate-500">
+          En total declaras aproximadamente{" "}
+          <span className="font-semibold">
+            {kmMotorizadosLocales.toFixed(1)} km
+          </span>{" "}
+          de transporte motorizado local. Los tramos a pie o en
+          bicicleta no suman CO₂ en este bloque.
+        </p>
+      )}
+    </>
   )}
 </div>
+
 </div>
             </CardContent>
           </Card>
