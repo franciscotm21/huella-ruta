@@ -1705,7 +1705,7 @@ function CenterText({ viewBox, totalKg }: any) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-30 bg-black/40 flex items-start justify-center px-4 pt-[120px]"
+      className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) setIntroIdentificacionVisible(false);
       }}
@@ -1714,7 +1714,7 @@ function CenterText({ viewBox, totalKg }: any) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 20, opacity: 0 }}
-        className="relative w-full max-w-4xl rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 py-5 shadow-lg"
+        className="relative w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 py-5 shadow-lg"
       >
         {/* Botón X */}
         <button
@@ -1725,72 +1725,72 @@ function CenterText({ viewBox, totalKg }: any) {
           ×
         </button>
 
-       {/* Contenido */}
-<div className="flex flex-col gap-3">
-  {/* Icono + título centrado */}
-  <div className="flex flex-col items-center gap-2">
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
-      🧭
-    </div>
-    <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 text-center">
-      ¡Cuéntanos tu viaje!
-    </h2>
-  </div>
+        {/* Contenido */}
+        <div className="flex flex-col gap-3">
+          {/* Icono + título centrado */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
+              🧭
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 text-center">
+              ¡Cuéntanos tu viaje!
+            </h2>
+          </div>
 
-  {/* Texto bajo el título */}
-  <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
-    Esta calculadora está pensada para quienes{" "}
-    <span className="font-semibold">están planificando</span> una visita a los
-    atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
-    <span className="font-semibold">ya viajaron</span> y quieren saber qué huella
-    dejaron.
-  </p>
+          {/* Texto bajo el título */}
+          <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
+            Esta calculadora está pensada para quienes{" "}
+            <span className="font-semibold">están planificando</span> una visita a los
+            atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
+            <span className="font-semibold">ya viajaron</span> y quieren saber qué huella
+            dejaron.
+          </p>
 
-  <p className="text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
-    Comenzando con la categoría de{" "}
-    <span className="font-semibold">"Identificación"</span> en la cual te
-    preguntaremos:
-  </p>
+          <p className="text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
+            Comenzando con la categoría de{" "}
+            <span className="font-semibold">"Identificación"</span> en la cual te
+            preguntaremos:
+          </p>
 
-  <ul className="mt-1.5 space-y-1.5 text-sm sm:text-base text-emerald-900/90 text-justify">
-    <li>• Desde dónde viajas (ciudad o punto de origen).</li>
-    <li>• A qué sector del corredor vas (destino principal).</li>
-    <li>
-      • La distancia aproximada de ida (si no aparece tu punto de origen).
-    </li>
-  </ul>
+          <ul className="mt-1.5 space-y-1.5 text-sm sm:text-base text-emerald-900/90 text-justify">
+            <li>• Desde dónde viajas (ciudad o punto de origen).</li>
+            <li>• A qué sector del corredor vas (destino principal).</li>
+            <li>
+              • La distancia aproximada de ida (si no aparece tu punto de origen).
+            </li>
+          </ul>
 
-  <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
-    Continuará del mismo modo para las siguientes categorías y luego te
-    mostraremos <span className="font-semibold">acciones concretas</span> para
-    reducir o compensar tu huella.
-  </p>
+          <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
+            Continuará del mismo modo para las siguientes categorías y luego te
+            mostraremos <span className="font-semibold">acciones concretas</span> para
+            reducir o compensar tu huella.
+          </p>
 
-  <div className="mt-2 flex flex-col items-center gap-3">
-    <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
-      <span className="inline-flex items-center gap-1 whitespace-nowrap">
-        ✨{" "}
-        <span>Mientras más preciso seas, más realista será tu resultado</span>
-        {" "}✨
-      </span>
-    </p>
+          <div className="mt-2 flex flex-col items-center gap-3">
+            <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                ✨{" "}
+                <span>Mientras más preciso seas, más realista será tu resultado</span>
+                {" "}✨
+              </span>
+            </p>
 
-    <motion.button
-      type="button"
-      onClick={() => setIntroIdentificacionVisible(false)}
-      whileHover={{ scale: 1.04, y: -1 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md hover:bg-emerald-700"
-    >
-      Entendido, completar mis datos
-    </motion.button>
-  </div>
-</div>
-
+            <motion.button
+              type="button"
+              onClick={() => setIntroIdentificacionVisible(false)}
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md hover:bg-emerald-700"
+            >
+              Entendido, completar mis datos
+            </motion.button>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   )}
 </AnimatePresence>
+
 
 
        {paso===0 && (
