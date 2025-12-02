@@ -2332,54 +2332,85 @@ function CenterText({ viewBox, totalKg }: any) {
 )}
 
 
-        {/* Navegación pasos */}
-        <div className="flex items-center justify-between my-6">
-          <button
-            onClick={() => {
-              trackEvent("step_back", {
-                category: "Calculadora",
-                paso_actual: paso + 1,
-              });
-              setPaso((p) => Math.max(0, p - 1));
-            }}
-            disabled={paso === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Atrás
-          </button>
-          <div className="text-sm text-slate-500">
-            Paso {paso + 1} de {PASOS.length}
-          </div>
-          <button
-            onClick={handleSiguientePaso}
-            disabled={paso === PASOS.length - 1}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
-          >
-            Siguiente
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+{/* Navegación pasos */}
+<div className="flex items-center justify-between my-6">
+  <button
+    onClick={() => {
+      trackEvent("step_back", {
+        category: "Calculadora",
+        paso_actual: paso + 1,
+      });
+      setPaso((p) => Math.max(0, p - 1));
+    }}
+    disabled={paso === 0}
+    className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
+  >
+    <ChevronLeft className="w-4 h-4" />
+    Atrás
+  </button>
 
-      <footer className="mt-12 border-t">
-        <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-6 text-sm">
-          <div>
-            <p className="font-medium text-slate-600">Reserva de Biosfera</p>
-            <p className="text-slate-400">
-              Corredor Biológico Nevados de Chillán – Laguna del Laja
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-slate-600">Universidad de Concepción</p>
-            <p className="text-slate-500 mt-1">Departamento de Ingeniería Industrial</p>
-          </div>
-          <div>
-            <p className="font-medium text-slate-600">Gobierno Regional de Ñuble</p>
-            <p className="text-slate-500 mt-1">Juntos por un futuro mejor</p>
-          </div>
-        </div>
-      </footer>
+  <div className="text-sm text-slate-500">
+    Paso {paso + 1} de {PASOS.length}
+  </div>
+
+  <button
+    onClick={handleSiguientePaso}
+    disabled={paso === PASOS.length - 1}
+    className="inline-flex items-center gap-2 px-4 py-2 rounded-md border bg-white hover:bg-slate-50 disabled:opacity-50"
+  >
+    Siguiente
+    <ChevronRight className="w-4 h-4" />
+  </button>
+</div>
+</div>
+
+<footer className="mt-10 border-t border-slate-200 bg-gradient-to-b from-white via-white to-emerald-50">
+  <div className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-8 text-sm">
+    {/* Reserva de Biosfera */}
+    <div className="flex items-center gap-4">
+      <div>
+        <p className="font-medium text-slate-600">Corredor Biológico</p>
+        <p className="text-slate-500 mt-1">Nevados de Chillán – Laguna del Laja
+        </p>
+      </div>
+      <img
+        src="/logo-reserva-biosfera.png"
+        alt="Logo Reserva de Biosfera"
+        className="h-12 md:h-14 w-auto object-contain"
+      />
+    </div>
+
+    {/* Universidad de Concepción */}
+    <div className="flex items-center gap-4">
+      <div>
+        <p className="font-medium text-slate-600">Universidad de Concepción</p>
+        <p className="text-slate-500 mt-1">
+          Departamento de Ingeniería Industrial
+        </p>
+      </div>
+      <img
+        src="/logo-udec.png"
+        alt="Logo Universidad de Concepción"
+        className="h-12 md:h-12 w-auto object-contain"
+      />
+    </div>
+
+    {/* Gobierno Regional de Ñuble */}
+    <div className="flex items-center gap-4">
+      <div>
+        <p className="font-medium text-slate-600">Gobierno Regional de Ñuble</p>
+        <p className="text-slate-500 mt-1">Juntos por un futuro mejor</p>
+      </div>
+      <img
+        src="/logo-gore-nuble.png"
+        alt="Logo Gobierno Regional de Ñuble"
+        className="h-24 md:h-24 w-auto object-contain"
+      />
+    </div>
+  </div>
+</footer>
+
+
 
       {/* MODAL DE ACCIÓN SELECCIONADA */}
       <AnimatePresence>
