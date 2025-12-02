@@ -556,6 +556,40 @@ useEffect(() => {
 const CONFETTI_COLORS = ["#10b981", "#facc15", "#38bdf8", "#f97316", "#ec4899"];
 const CONFETTI_PIECES = 70;
 
+const ACCIONES_SUGERIDAS: Array<{
+  id: string;
+  icon: JSX.Element;
+  titulo: string;
+  texto: string;
+  etiqueta: string;
+}> = [
+  {
+    id: "arbol",
+    icon: <Trees className="w-7 h-7" />,
+    titulo: "Planta un árbol nativo",
+    texto:
+      "Súmate a jornadas de restauración en la Reserva o apoya la reforestación con especies nativas en tu territorio.",
+    etiqueta: "Compensación",
+  },
+  {
+    id: "basura-cero",
+    icon: <Recycle className="w-7 h-7" />,
+    titulo: "Compromiso “Basura Cero”",
+    texto:
+      "Lleva botella reutilizable, trae de regreso tus residuos y prioriza alimentos a granel o con envases reutilizables.",
+    etiqueta: "Residuos y agua",
+  },
+  {
+    id: "comunidad-local",
+    icon: <Home className="w-7 h-7" />,
+    titulo: "Apoya a comunidades locales",
+    texto:
+      "Elige alojamientos, guías y restaurantes locales, reforzando así la economía del territorio.",
+    etiqueta: "Economía local",
+  },
+];
+
+
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
     "Transporte ida/regreso": [
       { icon:<Car className="w-4 h-4"/>, titulo:"Comparte el auto", texto:"Llena los asientos: baja el CO2 por persona."},
@@ -2240,87 +2274,121 @@ function CenterText({ viewBox, totalKg }: any) {
                         Desglose
                       </button>
                       <button
-                        type="button"
-                        onClick={() => setTabResultados("acciones")}
-                        className={`px-4 py-1.5 rounded-full transition ${
-                          tabResultados === "acciones"
-                            ? "bg-white shadow-sm text-slate-900"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        Acciones clave
+  type="button"
+  onClick={() => setTabResultados("acciones")}
+  className={`px-4 py-1.5 rounded-full transition ${
+    tabResultados === "acciones"
+      ? "bg-white shadow-sm text-slate-900"
+      : "text-slate-500"
+  }`}
+>
+                        Acciones sugeridas
                       </button>
                     </div>
-
                     {tabResultados === "desglose" ? (
-                      <div className="space-y-3">
-                        {desglose.map((b, i) => {
-                          const pct =
-                            totalKg > 0 ? (b.kg / totalKg) * 100 : 0;
-                          const isTop = b.name === topCat;
-                          return (
-                            <div
-                              key={b.name}
-                              className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2 ${
-                                isTop
-                                  ? "bg-emerald-50 border border-emerald-200"
-                                  : "bg-slate-50"
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <span
-                                  className="w-3.5 h-3.5 rounded-full"
-                                  style={{
-                                    background:
-                                      colores[i % colores.length],
-                                  }}
-                                />
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-slate-800">
-                                    {b.name}
-                                  </span>
-                                  <span className="text-[11px] text-slate-500">
-                                    {pct.toFixed(1)}% del total
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-semibold text-slate-900">
-                                  {b.kg.toFixed(2)} kg
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-xs text-slate-500">En tu viaje,{" "}<span className="font-semibold text-slate-800">  {topCat}</span>{" "} concentra aproximadamente{" "}
-                          <span className="font-semibold text-slate-800">{topPct.toFixed(1)}% de tu huella total
-                          </span>. Priorizar mejoras en esta categoría tiene el mayor impacto.
-                        </p>
-                        <div className="space-y-2">
-                          {(acciones[topCat] || []).map((a, idx) => (
-                            <div
-                              key={idx}
-                              className="flex gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5"
-                            >
-                              <div className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm">
-                                {a.icon}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-semibold text-emerald-900">
-                                  {a.titulo}
-                                </p>
-                                <p className="text-xs text-emerald-700">
-                                  {a.texto}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+  /* tu bloque de desglose se mantiene igual */
+  <div className="space-y-3">
+    {desglose.map((b, i) => {
+      const pct = totalKg > 0 ? (b.kg / totalKg) * 100 : 0;
+      const isTop = b.name === topCat;
+      return (
+        <div
+          key={b.name}
+          className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2 ${
+            isTop
+              ? "bg-emerald-50 border border-emerald-200"
+              : "bg-slate-50"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="w-3.5 h-3.5 rounded-full"
+              style={{ background: colores[i % colores.length] }}
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-slate-800">
+                {b.name}
+              </span>
+              <span className="text-[11px] text-slate-500">
+                {pct.toFixed(1)}% del total
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-semibold text-slate-900">
+              {b.kg.toFixed(2)} kg
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+) : (
+  <motion.div
+    key="acciones-sugeridas"
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.25, ease: "easeOut" }}
+    className="space-y-4"
+  >
+    <p className="text-xs text-slate-500 text-justify">
+      Además de las acciones específicas por categoría, aquí tienes{" "}
+      <span className="font-semibold text-emerald-700">
+        tres compromisos generales
+      </span>{" "}
+      que siempre generan {" "}
+      <span className="font-semibold text-emerald-700">impacto positivo  </span>{" "} en la Reserva y su entorno,
+      independientemente del tipo de viaje que realices.
+    </p>
+
+    <div className="grid sm:grid-cols-3 gap-3">
+      {ACCIONES_SUGERIDAS.map((a, idx) => (
+        <motion.div
+          key={a.id}
+          initial={{ scale: 0.85, opacity: 0, y: 6 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.25,
+            delay: 0.05 * idx,
+            ease: "easeOut",
+          }}
+          className="relative flex flex-col h-full rounded-2xl border border-emerald-100 bg-gradient-to-b from-emerald-50 via-white to-emerald-50/70 px-3 py-3 shadow-[0_8px_18px_rgba(16,185,129,0.06)]"
+        >
+          {/* Etiqueta arriba derecha */}
+          <span className="absolute right-3 top-3 rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-800">
+            {a.etiqueta}
+          </span>
+
+          {/* Icono grande con pequeño “pop” */}
+          <motion.div
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{
+              duration: 0.25,
+              delay: 0.1 + 0.05 * idx,
+              ease: "easeOut",
+            }}
+          >
+            {a.icon}
+          </motion.div>
+
+          {/* Texto justificado */}
+          <h3 className="mt-3 text-sm font-semibold text-slate-900">
+            {a.titulo}
+          </h3>
+          <p className="mt-1 text-xs text-slate-600 leading-relaxed text-justify">
+            {a.texto}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  </motion.div>
+)}
+
+
+                  
+
                   </div>
                 </div>
 
