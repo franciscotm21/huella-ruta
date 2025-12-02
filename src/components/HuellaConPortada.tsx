@@ -1070,14 +1070,15 @@ const exportarPDF = async () => {
     const logoRight = await fileToDataURL("/logo-gore-nuble.png"); // ← cambia al nombre de tu archivo
     if (logoRight) {
       const logoWidth = 80;
-      const logoHeight = 55;
-      const marginRight = 30;
+      const logoHeight = 85;
+      const marginRight = 26;
       const xRight = W - marginRight - logoWidth;
 
-      doc.addImage(logoRight, "PNG", xRight, 18, logoWidth, logoHeight);
+      doc.addImage(logoRight, "PNG", xRight, 6, logoWidth, logoHeight);
     }
   } catch {}
 
+  // Título centrado entre ambos logos (puedes dejarlo como lo tenías si ya se ve bien)
   doc.setTextColor(COLOR.white.r, COLOR.white.g, COLOR.white.b);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
@@ -1086,7 +1087,6 @@ const exportarPDF = async () => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
   doc.text("Corredor Biológico Nevados de Chillán – Laguna del Laja", 130, 60);
-
 
   // === CAJA RESUMEN ===
 
