@@ -1823,9 +1823,10 @@ function CenterText({ viewBox, totalKg }: any) {
     </p>
   ) : (
     <>
-      <p className="mt-2 text-sm text-slate-700">
-        Detalla el uso de cada medio seleccionado:
+     <p className="mt-2 text-sm text-slate-700 font-semibold">
+      Detalla el uso de cada medio seleccionado:
       </p>
+
 
       <div className="mt-2 grid sm:grid-cols-2 gap-4">
         {st.transporte.uso_local
