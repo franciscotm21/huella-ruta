@@ -1538,7 +1538,7 @@ function CenterText({ viewBox, totalKg }: any) {
 
 
 {/* FILA 2: Indicadores ABAJO, horizontal */}
-<div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start md:pl-10 lg:pl-10">
+<div className="hidden md:flex flex-wrap gap-3 text-sm md:justify-start md:pl-6 lg:pl-10">
   {PASOS.map((s, i) => (
     <div
       key={s.key}
@@ -1597,20 +1597,20 @@ function CenterText({ viewBox, totalKg }: any) {
           ×
         </button>
 
-        {/* Contenido */}
-        <div className="flex flex-col gap-3">
-          {/* Icono + título centrado */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
-              🧭
-            </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 text-center">
-              ¡Cuéntanos tu viaje!
-            </h2>
-          </div>
+       {/* Contenido */}
+<div className="flex flex-col gap-3">
+  {/* Icono + título centrado */}
+  <div className="flex flex-col items-center gap-2">
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
+      🧭
+    </div>
+    <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-900 text-center">
+      ¡Cuéntanos tu viaje!
+    </h2>
+  </div>
 
-           {/* Texto bajo el título */}
-  <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90">
+  {/* Texto bajo el título */}
+  <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
     Esta calculadora está pensada para quienes{" "}
     <span className="font-semibold">están planificando</span> una visita a los
     atractivos de la Reserva de Biósfera en Ñuble/Biobío o para quienes{" "}
@@ -1618,13 +1618,13 @@ function CenterText({ viewBox, totalKg }: any) {
     dejaron.
   </p>
 
-  <p className="text-sm sm:text-base leading-relaxed text-emerald-900/90">
+  <p className="text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
     Comenzando con la categoría de{" "}
     <span className="font-semibold">"Identificación"</span> en la cual te
     preguntaremos:
   </p>
 
-  <ul className="mt-1.5 space-y-1.5 text-sm sm:text-base text-emerald-900/90">
+  <ul className="mt-1.5 space-y-1.5 text-sm sm:text-base text-emerald-900/90 text-justify">
     <li>• Desde dónde viajas (ciudad o punto de origen).</li>
     <li>• A qué sector del corredor vas (destino principal).</li>
     <li>
@@ -1632,7 +1632,7 @@ function CenterText({ viewBox, totalKg }: any) {
     </li>
   </ul>
 
-  <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90">
+  <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
     Continuará del mismo modo para las siguientes categorías y luego te
     mostraremos <span className="font-semibold">acciones concretas</span> para
     reducir o compensar tu huella.
@@ -1640,20 +1640,25 @@ function CenterText({ viewBox, totalKg }: any) {
 
   <div className="mt-2 flex flex-col items-center gap-3">
     <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
-      ✨ Mientras más preciso seas, más realista será tu resultado ✨
-        </p>
+      <span className="inline-flex items-center gap-1 whitespace-nowrap">
+        ✨{" "}
+        <span>Mientras más preciso seas, más realista será tu resultado</span>
+        {" "}✨
+      </span>
+    </p>
 
-            <motion.button
-              type="button"
-              onClick={() => setIntroIdentificacionVisible(false)}
-              whileHover={{ scale: 1.04, y: -1 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md hover:bg-emerald-700"
-            >
-              Entendido, completar mis datos
-            </motion.button>
-          </div>
-        </div>
+    <motion.button
+      type="button"
+      onClick={() => setIntroIdentificacionVisible(false)}
+      whileHover={{ scale: 1.04, y: -1 }}
+      whileTap={{ scale: 0.95 }}
+      className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md hover:bg-emerald-700"
+    >
+      Entendido, completar mis datos
+    </motion.button>
+  </div>
+</div>
+
       </motion.div>
     </motion.div>
   )}
