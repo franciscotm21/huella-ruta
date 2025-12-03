@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect,useRef } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Label } from "recharts";
 import {motion,AnimatePresence,useMotionValue,useTransform,animate,} from "framer-motion";
 import { Leaf, Plane, Car, Flame, Home, Map, ChevronRight, ChevronLeft, Download, MountainSnow, Droplets, Recycle, Trees, Bike, BadgeCheck, Zap, Truck, Plug, PillBottle, X, Star} from "lucide-react";
@@ -476,9 +476,7 @@ const arbolesEquivalentes = totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPor
 
   function AnimatedTotalKg({ value }: { value: number }) {
   const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (latest) =>
-    latest.toFixed(2)
-  );
+  const rounded = useTransform(motionValue, (latest) => latest.toFixed(2));
 
   React.useEffect(() => {
     const controls = animate(motionValue, value, {
@@ -502,15 +500,57 @@ const arbolesEquivalentes = totalKg > 0 ? Math.max(1, Math.round(totalKg / kgPor
         }}
       />
 
-      {/* Número animado */}
-      <div className="relative flex items-baseline gap-1">
-        <motion.span style={{ fontVariantNumeric: "tabular-nums" }} className="text-4xl sm:text-5xl font-extrabold tracking-tight">{rounded}
+      {/* Número + unidad con tooltip */}
+      <div className="relative flex items-baseline gap-2">
+        <motion.span
+          style={{ fontVariantNumeric: "tabular-nums" }}
+          className="text-4xl sm:text-5xl font-extrabold tracking-tight"
+        >
+          {rounded}
         </motion.span>
-        <span className="text-xl sm:text-2xl font-extrabold">kg CO₂e</span>
+
+        {/* Contenedor de la unidad con tooltip */}
+        <div className="relative inline-flex items-baseline gap-1 group">
+          <span className="text-xl sm:text-2xl font-extrabold">
+            kg
+          </span>
+
+          {/* CO2e con estilo “hint” */}
+          <button
+            type="button"
+            className="text-xl sm:text-2xl font-extrabold cursor-help underline decoration-dotted decoration-emerald-200/80 underline-offset-4"
+          >
+            CO₂e
+          </button>
+
+          {/* Tooltip flotante */}
+          <div
+            className="
+              pointer-events-none
+              absolute left-1/2 top-full z-20 mt-2
+              hidden w-64 -translate-x-1/2
+              rounded-xl border border-slate-200 bg-white/95
+              p-3 text-xs text-slate-600
+              shadow-lg shadow-slate-900/10 backdrop-blur
+              group-hover:block group-focus-within:block
+            "
+          >
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              ¿Qué significa CO₂e?
+            </p>
+            <p className="leading-relaxed text-justify">
+              <span className="font-semibold">CO₂e</span> es la unidad de
+              medida que expresa el impacto de diferentes gases de efecto
+              invernadero en un solo valor, como equivalencia al potencial de
+              calentamiento del dióxido de carbono (<span className="font-semibold">CO₂</span>).
+            </p>
+          </div>
+        </div>
       </div>
-      </div>
-      );
-    }
+    </div>
+  );
+}
+
 
   
   const colores = ["#10b981","#0ea5e9","#f59e0b","#ef4444","#6366f1","#14b8a6"];
@@ -588,6 +628,26 @@ const ACCIONES_SUGERIDAS: Array<{
     etiqueta: "Economía local",
   },
 ];
+
+const [perfilInfoOpen, setPerfilInfoOpen] = useState(false);
+
+const perfilInfoRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+  if (!perfilInfoOpen) return;
+
+  const handleClickOutside = (e: MouseEvent) => {
+    if (
+      perfilInfoRef.current &&
+      !perfilInfoRef.current.contains(e.target as Node)
+    ) {
+      setPerfilInfoOpen(false);
+    }
+  };
+
+  window.addEventListener("mousedown", handleClickOutside);
+  return () => window.removeEventListener("mousedown", handleClickOutside);
+}, [perfilInfoOpen]);
 
 
   const acciones: Record<string, Array<{icon: JSX.Element, titulo:string, texto:string}>> = {
@@ -2522,7 +2582,7 @@ function DonutTooltip({ active, payload }: any) {
                 {/* Columna derecha: KPI + equivalencias + acciones principales */}
                 <div className="order-1 lg:order-2 space-y-4">
                   {/* Tarjeta principal */}
-                  <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-5 text-white shadow-md">
+                  <div className="relative rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-5 text-white shadow-md">
                     <div className="absolute right-[-50px] top-[-50px] h-40 w-40 rounded-full bg-emerald-400/20 blur-2xl" />
                     <div className="relative">
                       <p className="text-xs uppercase tracking-wide text-emerald-100">
@@ -2531,14 +2591,111 @@ function DonutTooltip({ active, payload }: any) {
                       <div className="mt-2 flex justify-center"> <AnimatedTotalKg value={totalKg} />
                       </div>
 
-                      {/* PERFIL ESTIMADO CENTRADO */}
-                      <div className="mt-4 flex justify-center">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-emerald-700/40 px-4 py-1.5 text-xs sm:text-sm text-emerald-50">
-                        <span className={`h-2.5 w-2.5 rounded-full ${perfilDotColor}`} />
-                        <span className="font-medium">Perfil estimado:</span>
-                        <span className="font-semibold">{totalKg < 30  ? "Visita de bajo impacto"  : totalKg < 80 ? "Impacto medio": "Impacto alto"}</span>
-                         </div>
-                         </div>
+                     {/* PERFIL ESTIMADO – CLICKEABLE CON TARJETA DE SIMBOLOGÍA */}
+<div className="mt-4 flex justify-center">
+  <div className="relative" ref={perfilInfoRef}>
+    <motion.button
+      type="button"
+      onClick={() => {
+        setPerfilInfoOpen((v) => !v);
+        trackEvent("perfil_info_toggle", {
+          category: "Calculadora",
+          abierto: !perfilInfoOpen,
+          totalKg,
+        });
+      }}
+      className="inline-flex items-center gap-2 rounded-full bg-emerald-700/40 px-4 py-1.5 text-xs sm:text-sm text-emerald-50 shadow-sm hover:bg-emerald-700/60 focus:outline-none"
+      whileTap={{ scale: 0.96 }}
+      initial={false}
+      animate={
+        perfilInfoOpen
+          ? { scale: 1.04, y: -2, boxShadow: "0 10px 25px rgba(16,185,129,0.35)" }
+          : { scale: 1, y: 0, boxShadow: "0 4px 12px rgba(16,185,129,0.18)" }
+      }
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+    >
+      <span className={`h-2.5 w-2.5 rounded-full ${perfilDotColor}`} />
+
+      {/* sin subrayado, limpio */}
+      <span className="font-medium cursor-pointer">
+        Perfil estimado
+      </span>
+
+      <span className="font-semibold">
+        {totalKg < 30
+          ? "Visita de bajo impacto"
+          : totalKg < 80
+          ? "Impacto medio"
+          : "Impacto alto"}
+      </span>
+    </motion.button>
+
+    {/* Tarjeta de simbología centrada respecto al KPI */}
+    <AnimatePresence>
+      {perfilInfoOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="absolute left-1/2 top-full z-40 mt-3 w-[280px] sm:w-[320px] -translate-x-1/2 rounded-2xl border border-emerald-100 bg-white/95 p-4 text-xs text-slate-600 shadow-xl shadow-emerald-900/15 backdrop-blur"
+        >
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            ¿Cómo interpretamos tu perfil?
+          </p>
+
+          <div className="space-y-2 text-justify">
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-300" />
+              <div>
+                <p className="text-xs font-semibold text-slate-800">
+                  Visita de bajo impacto
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Menos de <span className="font-semibold">30 kg CO₂e</span> en
+                  total. Viajes cortos, con transporte compartido y decisiones
+                  muy cuidadas en alimentación y actividades.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-amber-300" />
+              <div>
+                <p className="text-xs font-semibold text-slate-800">
+                  Impacto medio
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Entre <span className="font-semibold">30 y 80 kg CO₂e</span>.
+                  Rango típico de una visita turística estándar a la Reserva,
+                  con oportunidades claras de mejora en transporte y hábitos
+                  de consumo.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="mt-1 h-2.5 w-2.5 rounded-full bg-red-400" />
+              <div>
+                <p className="text-xs font-semibold text-slate-800">
+                  Impacto alto
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Más de <span className="font-semibold">80 kg CO₂e</span>.
+                  Suele asociarse a largos desplazamientos en auto o avión y a
+                  decisiones intensivas en energía o recursos durante la visita.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+</div>
+
+
                          <p className="mt-6 text-sm sm:text-base text-emerald-50 text-justify leading-relaxed">Tu visita genera una huella equivalente al CO₂ que{" "}
                           <span className="font-semibold">un árbol nativo</span> absorbe en alrededor de{" "}
                           <span className="font-semibold">{aniosArbolEquivalentes.toFixed(1)} años</span>. Para compensarla en{" "}
