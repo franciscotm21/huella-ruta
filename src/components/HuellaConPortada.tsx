@@ -1861,7 +1861,7 @@ function DonutTooltip({ active, payload }: any) {
 <div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-900/5 pointer-events-none">
   <video
     className="w-full max-h-56 object-cover"
-    src="/videos/intro-calculadora.mp4" // deja tu ruta acá
+    src="/videos/intro-calculadora1.mp4" // deja tu ruta acá
     autoPlay
     muted
     loop
