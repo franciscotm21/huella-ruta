@@ -2635,12 +2635,12 @@ function DonutTooltip({ active, payload }: any) {
       {perfilInfoOpen && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
-          className="absolute left-1/2 top-full z-40 mt-3 w-[280px] sm:w-[320px] -translate-x-1/2 rounded-2xl border border-emerald-100 bg-white/95 p-4 text-xs text-slate-600 shadow-xl shadow-emerald-900/15 backdrop-blur"
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="absolute top-full left-0 right-0 z-40 mt-3 mx-auto w-[260px] sm:w-[300px] rounded-2xl border border-emerald-100 bg-white/95 p-4 text-xs text-slate-600 shadow-xl shadow-emerald-900/15 backdrop-blur"
         >
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 text-center">
             ¿Cómo interpretamos tu perfil?
           </p>
 
@@ -2652,8 +2652,8 @@ function DonutTooltip({ active, payload }: any) {
                   Visita de bajo impacto
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Menos de <span className="font-semibold">30 kg CO₂e</span> en
-                  total. Viajes cortos, con transporte compartido y decisiones
+                  Menos de <span className="font-semibold">30 kg CO₂e</span>:
+                    Viajes cortos, con transporte compartido y decisiones
                   muy cuidadas en alimentación y actividades.
                 </p>
               </div>
@@ -2666,7 +2666,7 @@ function DonutTooltip({ active, payload }: any) {
                   Impacto medio
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Entre <span className="font-semibold">30 y 80 kg CO₂e</span>.
+                  Entre <span className="font-semibold">30 y 80 kg CO₂e</span>:
                   Rango típico de una visita turística estándar a la Reserva,
                   con oportunidades claras de mejora en transporte y hábitos
                   de consumo.
@@ -2681,7 +2681,7 @@ function DonutTooltip({ active, payload }: any) {
                   Impacto alto
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Más de <span className="font-semibold">80 kg CO₂e</span>.
+                  Más de <span className="font-semibold">80 kg CO₂e</span>:
                   Suele asociarse a largos desplazamientos en auto o avión y a
                   decisiones intensivas en energía o recursos durante la visita.
                 </p>
