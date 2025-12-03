@@ -1581,6 +1581,37 @@ function CenterText({ viewBox, totalKg }: any) {
   );
 }
 
+function DonutTooltip({ active, payload }: any) {
+  if (!active || !payload || !payload.length) return null;
+
+  const item = payload[0];
+  const name = item.name as string;
+  const value = Number(item.value || 0);
+  const color = item.payload?.color || item.color || "#10b981";
+  const pct = totalKg ? (value / totalKg) * 100 : 0;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white/95 px-3 py-2 shadow-lg shadow-slate-900/10 backdrop-blur">
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+        <span
+          className="h-2.5 w-2.5 rounded-full"
+          style={{ backgroundColor: color }}
+        />
+        <span className="truncate max-w-[150px]">{name}</span>
+      </div>
+
+      <div className="mt-1 text-sm font-semibold text-slate-900">
+        {value.toFixed(2)} kg CO₂e
+      </div>
+
+      <div className="text-[11px] text-slate-500">
+        {pct.toFixed(1)}% del total
+      </div>
+    </div>
+  );
+}
+
+
 // 👇 Paso 2 integración analítica de google
   const handleSiguientePaso = () => {
     setPaso((prevPaso) => {
@@ -2347,7 +2378,9 @@ function CenterText({ viewBox, totalKg }: any) {
                             />
                           </Pie>
 
-                          <Tooltip formatter={tooltipFormatter} />
+                          <Tooltip content={<DonutTooltip />}
+                          cursor={{ fill: "rgba(148, 163, 184, 0.08)" }} // fondo suave al pasar el mouse // 
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -2542,7 +2575,8 @@ function CenterText({ viewBox, totalKg }: any) {
                     </p>
                     <p className="text-xs text-emerald-800/90">
                       Si mejoras esta categoría, lograrás el mayor impacto en la reducción de
-                      CO₂. Toca una acción para ver un plan detallado para tu próxima visita.
+                      CO₂. {" "}<span className="font-semibold text-emerald-900"> Toca una acción
+                        </span>{" "} para ver un plan detallado para tu próxima visita.
                     </p>
 
                     <ul className="mt-2 space-y-2">
