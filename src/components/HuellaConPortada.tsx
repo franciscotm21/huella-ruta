@@ -2585,7 +2585,7 @@ function DonutTooltip({ active, payload }: any) {
                   <div className="relative rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-5 text-white shadow-md">
                     <div className="absolute right-[-50px] top-[-50px] h-40 w-40 rounded-full bg-emerald-400/20 blur-2xl" />
                     <div className="relative">
-                      <p className="text-xs uppercase tracking-wide text-emerald-100">
+                      <p className="text-xs uppercase tracking-wide text-emerald-100 text-center">
                         Huella estimada de tu visita
                       </p>
                       <div className="mt-2 flex justify-center"> <AnimatedTotalKg value={totalKg} />
@@ -2722,7 +2722,7 @@ function DonutTooltip({ active, payload }: any) {
                   
                   {/* Acciones principales (clickeables) */}
                   <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-2">
-                    <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide">
+                    <p className="text-xs font-semibold text-emerald-900 uppercase tracking-wide text-center">
                       Acciones principales según mayor contribución
                     </p>
                     <p className="text-sm text-emerald-800">
