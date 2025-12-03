@@ -1805,7 +1805,7 @@ function DonutTooltip({ active, payload }: any) {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 20, opacity: 0 }}
-        className="relative w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-2xl border border-emerald-200 bg-emerald-50/90 px-6 py-5 shadow-lg"
+        className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-4 sm:px-6 sm:py-5 shadow-lg"
       >
         {/* Botón X */}
         <button
@@ -1817,7 +1817,7 @@ function DonutTooltip({ active, payload }: any) {
         </button>
 
         {/* Contenido */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {/* Icono + título centrado */}
           <div className="flex flex-col items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white">
@@ -1851,11 +1851,29 @@ function DonutTooltip({ active, payload }: any) {
             </li>
           </ul>
 
-          <p className="mt-3 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
+          <p className="mt-2 text-sm sm:text-base leading-relaxed text-emerald-900/90 text-justify">
             Continuará del mismo modo para las siguientes categorías y luego te
             mostraremos <span className="font-semibold">acciones concretas</span> para
             reducir o compensar tu huella.
           </p>
+
+          {/* 🔹 Video corto explicativo (autoplay, sin controles) */}
+<div className="mt-2 rounded-xl overflow-hidden border border-emerald-100 bg-emerald-900/5 pointer-events-none">
+  <video
+    className="w-full max-h-56 object-cover"
+    src="/videos/intro-calculadora.mp4" // deja tu ruta acá
+    autoPlay
+    muted
+    loop
+    playsInline
+    controls={false}
+    controlsList="nodownload noplaybackrate noremoteplayback nofullscreen"
+    disablePictureInPicture
+    tabIndex={-1}
+    aria-hidden="true"
+  />
+</div>
+
 
           <div className="mt-2 flex flex-col items-center gap-3">
             <p className="text-xs sm:text-sm text-emerald-900/80 text-center">
@@ -1881,6 +1899,7 @@ function DonutTooltip({ active, payload }: any) {
     </motion.div>
   )}
 </AnimatePresence>
+
 
 
 
